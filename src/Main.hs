@@ -19,7 +19,7 @@
 -- Module      : Main
 -- Description : The Main module for icebot
 -- Copyright   : Copyright (c) 2015, Peter Harpending.
--- License     : GPL-3
+-- License     : AGPL-3
 -- Maintainer  : Peter Harpending <peter@harpending.org>
 -- Stability   : experimental
 -- Portability : POSIX
