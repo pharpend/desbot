@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 -- icebot - bot for #snowdrift on FreeNode
 -- Copyright (c) 2015, Peter Harpending.
 -- 
@@ -26,5 +28,42 @@
 
 module Main where
 
+import Control.Concurrent
+import Control.Monad
+import Data.ByteString (ByteString)
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as B8
+import Network
+import Prelude hiding (log)
+import System.IO
+import System.Directory
+import System.Exit
+
 main :: IO ()
-main = return ()
+main = do fs <- freenodeSocket  
+          runBot fs
+
+freenodeSocket :: IO Handle
+freenodeSocket = do hdl <- connectTo "irc.freenode.net" (PortNumber 6667)
+                    hSetBinaryMode hdl True
+                    hSetBuffering hdl NoBuffering
+                    return hdl
+
+initialCommands :: [ByteString]
+initialCommands = ["NICK snowbot-test"
+                  ,"USER snowbot 0 * :information"
+                  ,"JOIN #snowdrift"]
+
+writeCommand :: ByteString -> Handle -> IO ()
+writeCommand bs hdl = do B.hPut hdl (mappend bs "\r\n")
+                         log (mconcat ["> ", bs])
+
+log :: ByteString -> IO ()
+log line = do path <- makeAbsolute "freenode.log"
+              B.appendFile path (mappend line "\n")
+
+runBot :: Handle -> IO ()
+runBot hdl = do forM_ initialCommands $
+                  \c -> writeCommand c hdl
+                forever $ B.hGetLine hdl >>=
+                          log

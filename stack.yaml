@@ -1,5 +1,5 @@
 flags: {}
 packages:
 - '.'
-extra-deps: []
+extra-deps: [ exceptional-0.1.5.1 ]
 resolver: nightly-2015-06-22

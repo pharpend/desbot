@@ -41,6 +41,8 @@ library
       base ==4.8.*
     , directory
     , exceptional >=0.1.5
+    , network
+    , parallel
     , text
     , yaml
   exposed-modules:
@@ -49,10 +51,21 @@ library
 executable icebot
   main-is:             Main.hs
   -- other-modules:       
-  -- other-extensions:    
+  other-extensions:    
+    OverloadedStrings
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:         -Wall
   build-depends:
       base ==4.8.*
+    , bytestring
+    , conduit >=1.2.3
+    , conduit-combinators >=1.0.0
+    , conduit-extra
+    , directory
     , icebot
+    , mtl
+    , parallel
+    , resourcet
+    , network
+    , safe
