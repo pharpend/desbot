@@ -36,10 +36,7 @@ module Network.IRC.Icebot
   , readConfig
   , readConfigFile
     -- * Running the server
-  , Threads
   , runServer
-  , repl
-  , iceParse
   )
   where
 
