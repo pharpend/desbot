@@ -48,10 +48,8 @@ import Data.Text (Text, pack)
 import qualified Data.Text.IO as T
 import Data.Yaml
 import Network
-import System.Console.Readline
 import System.Directory
 import System.IO
-import Text.Parsec
 
 -- |The Icebot configuration is a list of servers to connect to.
 newtype IceConfig = IceConfig [Server]
