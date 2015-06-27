@@ -55,6 +55,17 @@ This program is split into two separate components (see
 
 I roughly follow [Chris Done's style guide][8] for Haskell code.
 
+I strongly suggest you use [Stack][9] for development. You can use the
+old cabal sandbox way, but Stack is much nicer. desbot only compiles
+with GHC 7.10, so you have to use Stack (or maybe [Halcyon][10]) if you
+have an older version.
+
+To use stack:
+
+    stack setup
+    stack build
+    stack exec desbot
+
 ## Contact
 
 * Email: `peter@harpending.org`
@@ -68,3 +79,5 @@ I roughly follow [Chris Done's style guide][8] for Haskell code.
 [6]: https://github.com/pharpend/desbot/issues
 [7]: #contact
 [8]: https://github.com/chrisdone/haskell-style-guide/blob/master/README.md
+[9]: https://github.com/commercialhaskell/stack/wiki
+[10]: https://halcyon.sh/
