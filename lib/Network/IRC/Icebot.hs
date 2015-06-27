@@ -37,16 +37,26 @@ module Network.IRC.Icebot
   , readConfigFile
     -- * Running the server
   , runServer
+  , commandsParser
+  , Message(..)
+  , Command (..)
+    -- *** Semantic aliases for 'String'
+  , Channel
+  , Person
   )
   where
 
+import Control.Applicative (Alternative(..))
 import Control.Concurrent
 import Control.Exceptional
 import Control.Monad
+import Data.Attoparsec.Text
+import Data.Char (isSpace)
 import Data.String (IsString(..))
-import Data.Text (Text, pack)
+import Data.Text (Text, pack, unpack)
+import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import Data.Yaml
+import Data.Yaml hiding (Parser)
 import Network
 import System.Directory
 import System.IO
@@ -153,9 +163,10 @@ runServer srv =
          NoPassword -> return Nothing
          PromptPassword ->
            do hSetEcho stdin False
-              T.putStr (mappend "Enter password for " (srvId srv))
+              T.putStr (mconcat ["Enter password for ",(srvId srv),": "])
               pw <- T.getLine
               hSetEcho stdin True
+              T.putStrLn ""
               return (Just pw)
          NickServPassword pw -> return (Just pw)
      forkIO $
@@ -164,14 +175,11 @@ runServer srv =
                       (PortNumber (fromInteger (srvPort srv)))
           hSetBinaryMode hdl True
           hSetBuffering hdl NoBuffering
-          writeHdl hdl $
-            mappend "NICK " (srvNick srv)
-          writeHdl hdl $
-            mconcat ["USER ",srvUsername srv," 0 * :icebot!"]
+          writeHdl hdl $ mappend "NICK " (srvNick srv)
+          writeHdl hdl $ mconcat ["USER ",srvUsername srv," 0 * :icebot!"]
           forM_ (srvChannels srv) $
             \chan ->
-              writeHdl hdl $
-              mappend "JOIN " chan
+              writeHdl hdl $ mappend "JOIN " chan
           case pwd of
             Nothing -> return ()
             Just pw ->
@@ -183,7 +191,92 @@ runServer srv =
              T.appendFile (srvLogFile srv)
                           (mconcat ["> ",txt,"\n"])
         listenHdl hdl =
-          forever $
-          do line <- T.hGetLine hdl
+          whileIo (hIsOpen hdl) $
+          do line <-
+               T.takeWhile (/= '\r') <$> T.hGetLine hdl
+             case parseOnly (commandsParser <* endOfInput) line of
+               Right x ->
+                 case x of
+                   PrivMsg chan _ cmd ->
+                     case cmd of
+                       Help ->
+                         writeHdl hdl $ privMsg chan "No help for you!"
+                       Source ->
+                         writeHdl hdl $
+                         privMsg chan "https://github.com/pharpend/icebot"
+                       RobotRollCall ->
+                         writeHdl hdl $
+                         privMsg chan
+                                 (mconcat [srvNick srv," reporting for duty!"])
+                   Ping -> writeHdl hdl "PONG"
+               Left x ->
+                 T.appendFile (srvLogFile srv)
+                              (mappend (pack (show x)) "\n")
              T.appendFile (srvLogFile srv)
                           (mconcat ["< ",line,"\n"])
+        whileIo :: Monad m
+                => m Bool -> m () -> m ()
+        whileIo b x =
+          do continue <- b
+             if continue
+                then x >> whileIo b x
+                else return ()
+
+-- |Private message someone
+privMsg :: Channel -> Text -> Text
+privMsg chan txt =
+  mconcat ["PRIVMSG ",chan," :",txt,"\r\n"]
+
+-- |The parser for commands
+commandsParser :: Parser Message
+commandsParser =
+  pingParser <|>
+  (do char ':'
+      person <- takeWhile1 (/= '!')
+      takeWhile1 (/= ' ')
+      space
+      privMsgParser person)
+
+-- |Parse channel messages
+privMsgParser :: Person -> Parser Message
+privMsgParser p =
+  do string "PRIVMSG"
+     space
+     chanName <- takeWhile1 (/= ' ')
+     space
+     char ':'
+     cmd <-
+       (
+        do string "!robotrollcall"
+           return RobotRollCall) <|>
+       (do char '~'
+           manyTill anyChar space >>=
+             \case
+               "help" -> return Help
+               "?" -> return Help
+               "source" -> return Source
+               "src" -> return Source
+               "robotrollcall" ->
+                 return RobotRollCall
+               x ->
+                 fail (mconcat ["",x," is not a command I recognize."]))
+     return $ PrivMsg chanName p cmd
+
+-- |A Command
+data Message = PrivMsg Channel Person Command
+             | Ping
+  deriving Show
+
+type Channel = Text
+type Person = Text
+
+-- |A specific command
+data Command = Help
+             | Source
+             | RobotRollCall
+  deriving Show
+
+
+pingParser :: Parser Message
+pingParser = do string "PING"
+                return Ping
