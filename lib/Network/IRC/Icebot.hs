@@ -31,7 +31,7 @@ module Network.IRC.Icebot
   ( -- ** Convenience re-exports
     module Control.Exceptional
     -- * Configuration
-  , IceConfig
+  , IceConfig(..)
   , Server(..)
   , readConfig
   , readConfigFile
@@ -57,7 +57,13 @@ import System.IO
 import Text.Parsec
 
 -- |The Icebot configuration is a list of servers to connect to.
-type IceConfig = [Server]
+newtype IceConfig = IceConfig [Server]
+  deriving (Eq, Show)
+
+instance FromJSON IceConfig where
+  parseJSON (Array v) = IceConfig <$> parseJSON v
+  parseJSON (Object v) = IceConfig <$> v .: "servers"
+  parseJSON _ = mzero
 
 -- |Information on connecting to a server
 data Server =
