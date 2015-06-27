@@ -56,7 +56,7 @@ newtype IceConfig = IceConfig [Server]
   deriving (Eq, Show)
 
 instance FromJSON IceConfig where
-  parseJSON (Array v) = IceConfig <$> parseJSON v
+  parseJSON (Array v) = IceConfig <$> parseJSON (Array v)
   parseJSON (Object v) = IceConfig <$> v .: "servers"
   parseJSON _ = mzero
 
