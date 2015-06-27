@@ -1,0 +1,27 @@
+# -*- mode: yaml -*-
+# 
+# Icebot configuration file example
+# 
+# No SSL support yet.
+
+- hostname: irc.freenode.net
+  port: 6667
+  nick: icebot-example
+  username: icebot-example
+  id: freenode
+  log-file: freenode.log
+  channels:
+    - "#snowdrift"
+    - "#test"
+
+- hostname: irc.oftc.net
+  port: 6667
+  nick: icebot-example
+  username: icebot-example
+  id: oftc
+  log-file: oftc.log
+  # Get password from stdin
+  password: prompt
+  channels:
+    - "#git-annex"
+    - "#debian"
