@@ -11,6 +11,7 @@ I have tested this on Arch Linux with stack 0.0.3
 
         git clone git://github.com/pharpend/icebot.git
         cd icebot
+        stack setup
         stack install
 
 ## Usage
