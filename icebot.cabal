@@ -41,11 +41,11 @@ library
     LambdaCase
     OverloadedStrings
   build-depends:
-      base ==4.8.*
+      attoparsec
+    , base ==4.8.*
     , directory
     , exceptional >=0.1.5
     , network
-    , parsec
     , text
     , yaml
   exposed-modules:
