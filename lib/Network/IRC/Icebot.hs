@@ -148,88 +148,36 @@ readConfig = do path <- exceptIO $ makeAbsolute "icebot.yaml"
                   Success pth -> readConfigFile pth
 
 -- |Connect to a server.
-runServer :: Server -> IO ()
+runServer :: Server -> IO ThreadId
 runServer srv =
-  do hdl <-
-       connectTo (srvHostname srv)
-                 (PortNumber (fromInteger (srvPort srv)))
-     hSetBinaryMode hdl True
-     hSetBuffering hdl NoBuffering
-     writeHdl hdl $
-       mappend "NICK " (srvNick srv)
-     writeHdl hdl $
-       mconcat ["USER ",srvUsername srv," 0 * :icebot!"]
-     forM_ (srvChannels srv) $
-       \chan ->
-         writeHdl hdl $
-         mappend "JOIN " chan
-     case srvPassword srv of
-       NoPassword -> return ()
-       PromptPassword ->
-         do pwd <- T.getLine
-            writeHdl hdl
-                     (mconcat ["PRIVMSG NickServ :IDENTIFY "
-                              ,srvNick srv
-                              ," "
-                              ,pwd])
-       NickServPassword pwd ->
-         writeHdl hdl
-                  (mconcat ["PRIVMSG NickServ :IDENTIFY ",srvNick srv," ",pwd])
+  do pwd <-
+       case srvPassword srv of
+         NoPassword -> return Nothing
+         PromptPassword ->
+           do hSetEcho stdin False
+              pw <- T.getLine
+              hSetEcho stdin True
+              return (Just pw)
+         NickServPassword pw -> return (Just pw)
+     forkIO $
+       do hdl <-
+            connectTo (srvHostname srv)
+                      (PortNumber (fromInteger (srvPort srv)))
+          hSetBinaryMode hdl True
+          hSetBuffering hdl NoBuffering
+          writeHdl hdl $
+            mappend (mappend "NICK " (srvNick srv))
+                    (mconcat ["USER ",srvUsername srv," 0 * :icebot!"])
+          forM_ (srvChannels srv) $
+            \chan ->
+              writeHdl hdl $
+              mappend "JOIN " chan
+          case pwd of
+            Nothing -> return ()
+            Just pw ->
+              writeHdl hdl $
+              mconcat ["PRIVMSG NickServ :IDENTIFY ",srvNick srv," ",pw]
   where writeHdl hdl txt =
           do T.hPutStr hdl (mappend txt "\r\n")
              T.appendFile (srvLogFile srv)
                           (mappend txt "\n")
-
-type Threads = [(ThreadId, Server)]
-
--- |Run the read-eval-print loop
--- 
--- This is unfinished
-repl :: Threads -> IO ()
-repl srvs =
-  readline ">>= " >>=
-  \case
-    Nothing -> killThreads
-    Just "quit" -> killThreads
-    Just "exit" -> killThreads
-    Just s ->
-      do addHistory s
-         repl =<< iceParse srvs s
- where killThreads = do forM_ srvs (\(tid, _) -> killThread tid)
-                        putStrLn "\nGoodbye!"
-
-iceParse :: Threads -> String -> IO Threads
-iceParse srvs "" = return srvs
-iceParse srvs command =
-  case runParser iceParser () "keyboard input" (pack command) of
-    Left err -> do print err
-                   return srvs
-    Right Help -> do putStrLn "No help for you!"
-                     return srvs
-    Right Threads ->
-      do forM_ srvs $
-          \(tid,srv) ->
-            T.putStrLn (mconcat ["Server ",srvId srv," on ",pack $ show tid])
-         return srvs
-    Right (KillThread nom) ->
-      do putStrLn "No"
-         return srvs
-
-data Command = Help
-             | KillThread Text
-             | Threads
-
-iceParser :: Parsec Text () Command
-iceParser = helpParser <|> 
-            threadsParser <|> 
-            killThreadParser
-  where helpParser = do try $ string "help"
-                        return Help
-        threadsParser = do try $ string "threads"
-                           return Threads
- 
-killThreadParser :: Parsec Text () Command
-killThreadParser = try $ do string "killthread"
-                            skipMany1 (oneOf " \t")
-                            tnum <- many1 alphaNum
-                            return (KillThread (pack tnum))
