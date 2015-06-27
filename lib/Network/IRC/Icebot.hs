@@ -153,6 +153,7 @@ runServer srv =
          NoPassword -> return Nothing
          PromptPassword ->
            do hSetEcho stdin False
+              T.putStr (mappend "Enter password for " (srvId srv))
               pw <- T.getLine
               hSetEcho stdin True
               return (Just pw)
@@ -164,8 +165,9 @@ runServer srv =
           hSetBinaryMode hdl True
           hSetBuffering hdl NoBuffering
           writeHdl hdl $
-            mappend (mappend "NICK " (srvNick srv))
-                    (mconcat ["USER ",srvUsername srv," 0 * :icebot!"])
+            mappend "NICK " (srvNick srv)
+          writeHdl hdl $
+            mconcat ["USER ",srvUsername srv," 0 * :icebot!"]
           forM_ (srvChannels srv) $
             \chan ->
               writeHdl hdl $
@@ -175,7 +177,13 @@ runServer srv =
             Just pw ->
               writeHdl hdl $
               mconcat ["PRIVMSG NickServ :IDENTIFY ",srvNick srv," ",pw]
+          listenHdl hdl
   where writeHdl hdl txt =
           do T.hPutStr hdl (mappend txt "\r\n")
              T.appendFile (srvLogFile srv)
-                          (mappend txt "\n")
+                          (mconcat ["> ",txt,"\n"])
+        listenHdl hdl =
+          forever $
+          do line <- T.hGetLine hdl
+             T.appendFile (srvLogFile srv)
+                          (mconcat ["< ",line,"\n"])
