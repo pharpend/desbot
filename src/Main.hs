@@ -33,6 +33,8 @@ import Control.Concurrent
 import Control.Monad
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as B8
+import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import Network.IRC.Icebot
 import Paths_icebot
 import Options.Applicative
@@ -51,11 +53,16 @@ main =
          B8.putStrLn
        WithConfigFile fp ->
          do path <- makeAbsolute fp
-            iconf <- runExceptional =<< readConfigFile fp
-            threads <- mapM runServer iconf
-            forM threads $
-              \tid -> putStrLn $ mappend "Created thread with " 
-                                         show tid
+            IceConfig servers <- runExceptional =<< readConfigFile fp
+            threads <- mapM runServer servers
+            forM (zip threads servers) $
+              \(tid,srv) ->
+                T.putStrLn $
+                mconcat ["Created thread with "
+                        ,T.pack $ show tid
+                        ," for server "
+                        ,srvId srv
+                        ,"."]
             _ <- getLine
             forM_ threads killThread
 
