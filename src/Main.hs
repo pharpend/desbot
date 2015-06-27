@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
--- icebot - bot for #snowdrift on FreeNode
+-- desbot - bot for #snowdrift on FreeNode
 -- Copyright (c) 2015, Peter Harpending.
 -- 
 -- This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 
 -- | 
 -- Module      : Main
--- Description : The Main module for icebot
+-- Description : The Main module for desbot
 -- Copyright   : Copyright (c) 2015, Peter Harpending.
 -- License     : AGPL-3
 -- Maintainer  : Peter Harpending <peter@harpending.org>
@@ -35,15 +35,15 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as B8
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import Network.IRC.Icebot
-import Paths_icebot
+import Network.IRC.Desbot
+import Paths_desbot
 import Options.Applicative
 import System.Directory
 import System.IO
 
 main :: IO ()
 main =
-  do args <- execParser icebotPI
+  do args <- execParser desbotPI
      hSetBuffering stdout NoBuffering
      case args of
        ConfigExample ->
@@ -66,18 +66,18 @@ main =
             _ <- getLine
             forM_ threads killThread
 
-icebotPI :: ParserInfo Args
-icebotPI =
-  info (helper <*> icebotParser)
+desbotPI :: ParserInfo Args
+desbotPI =
+  info (helper <*> desbotParser)
        (mconcat [fullDesc,progDesc "A useless IRC bot"])
 
-icebotParser :: Parser Args
-icebotParser =
+desbotParser :: Parser Args
+desbotParser =
   (WithConfigFile <$>
    strOption (mconcat [long "config-file"
                       ,short 'c'
                       ,metavar "PATH"
-                      ,value "icebot.yaml"
+                      ,value "desbot.yaml"
                       ,help "The path to the configuration file."
                       ,showDefault])) <|>
   (flag' ConfigExample

@@ -1,4 +1,4 @@
--- icebot - bot for #snowdrift on FreeNode
+-- desbot - bot for #snowdrift on FreeNode
 -- Copyright (c) 2015, Peter Harpending.
 -- 
 -- This program is free software: you can redistribute it and/or modify

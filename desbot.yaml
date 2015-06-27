@@ -1,0 +1,13 @@
+# -*- mode: yaml -*-
+# 
+# Icebot configuration file example
+# 
+# No SSL support yet.
+
+servers:
+  - hostname: irc.freenode.net
+    nick: desbot
+    password: prompt
+    log-file: freenode.log
+    channels:
+      - "#snowdrift"

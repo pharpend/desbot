@@ -1,27 +1,40 @@
 # -*- mode: yaml -*-
 # 
-# Icebot configuration file example
+# Desbot configuration file example
 # 
 # No SSL support yet.
 
+# The only required fields are hostname and nick. The rest can be inferred. They
+# are listed here so you know what they are.
 - hostname: irc.freenode.net
+  nick: desbot-example
   port: 6667
-  nick: icebot-example
-  username: icebot-example
+  username: desbot-example
   id: freenode
+
+  # It's highly recommended that you have a log in case the bot crashes. By
+  # default, the log is "/dev/null".
   log-file: freenode.log
+
+  # This field technically isn't required, but it really should be. By default,
+  # desbot will not join any channels.
   channels:
     - "#snowdrift"
     - "#test"
 
+  # Get password from stdin
+  # 
+  # * If you set password to "prompt" or "stdin", desbot will prompt you for it
+  #   when you start the bot.
+  # * If you set "password: null", or delete the password field, desbot will
+  #   assume the nick is unregistered, and therefore doesn't need a password.
+  # * Otherwise, the password is whatever you put in this field.
+  password: prompt
+
 - hostname: irc.oftc.net
-  port: 6667
-  nick: icebot-example
-  username: icebot-example
+  nick: desbot-example
   id: oftc
   log-file: oftc.log
-  # Get password from stdin
-  password: prompt
   channels:
     - "#git-annex"
     - "#debian"

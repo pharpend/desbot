@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
--- icebot - bot for #snowdrift on FreeNode
+-- desbot - bot for #snowdrift on FreeNode
 -- Copyright (c) 2015, Peter Harpending.
 --
 -- This program is free software: you can redistribute it and/or modify
@@ -19,15 +19,15 @@
 -- <http://www.gnu.org/licenses/>.
 
 -- |
--- Module      : Network.IRC.Icebot
--- Description : Umbrella module for the icebot library
+-- Module      : Network.IRC.Desbot
+-- Description : Umbrella module for the desbot library
 -- Copyright   : Copyright (c) 2015, Peter Harpending.
 -- License     : AGPL-3
 -- Maintainer  : Peter Harpending <peter@harpending.org>
 -- Stability   : experimental
 -- Portability : POSIX
 
-module Network.IRC.Icebot
+module Network.IRC.Desbot
   ( -- ** Convenience re-exports
     module Control.Exceptional
     -- * Configuration
@@ -61,7 +61,7 @@ import Network
 import System.Directory
 import System.IO
 
--- |The Icebot configuration is a list of servers to connect to.
+-- |The Desbot configuration is a list of servers to connect to.
 newtype IceConfig = IceConfig [Server]
   deriving (Eq, Show)
 
@@ -147,10 +147,10 @@ readConfigFile fp =
                 Success (Left e) -> Failure $ prettyPrintParseException e
                 Success (Right e) -> Success e
 
--- |Read icebot.yaml from the current directory, try to marshal it into
+-- |Read desbot.yaml from the current directory, try to marshal it into
 -- an 'IceConfig'.
 readConfig :: IO (Exceptional IceConfig)
-readConfig = do path <- exceptIO $ makeAbsolute "icebot.yaml"
+readConfig = do path <- exceptIO $ makeAbsolute "desbot.yaml"
                 case path of
                   Failure err -> return $ Failure err
                   Success pth -> readConfigFile pth
@@ -176,7 +176,7 @@ runServer srv =
           hSetBinaryMode hdl True
           hSetBuffering hdl NoBuffering
           writeHdl hdl $ mappend "NICK " (srvNick srv)
-          writeHdl hdl $ mconcat ["USER ",srvUsername srv," 0 * :icebot!"]
+          writeHdl hdl $ mconcat ["USER ",srvUsername srv," 0 * :desbot!"]
           forM_ (srvChannels srv) $
             \chan ->
               writeHdl hdl $ mappend "JOIN " chan
@@ -203,7 +203,7 @@ runServer srv =
                          writeHdl hdl $ privMsg chan "No help for you!"
                        Source ->
                          writeHdl hdl $
-                         privMsg chan "https://github.com/pharpend/icebot"
+                         privMsg chan "https://github.com/pharpend/desbot"
                        RobotRollCall ->
                          writeHdl hdl $
                          privMsg chan
