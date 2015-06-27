@@ -49,19 +49,15 @@ main =
          makeAbsolute >>=
          B.readFile >>=
          B8.putStrLn
-       WithConfigFile fp startRepl ->
+       WithConfigFile fp ->
          do path <- makeAbsolute fp
             iconf <- runExceptional =<< readConfigFile fp
-            threads <-
-              mapM (forkIO . runServer) iconf
-            forM threads
-                 (\tid ->
-                    putStrLn (mappend "Created thread with " (show tid)))
-            if startRepl
-               then do repl (zip threads iconf)
-                       forM_ threads killThread
-               else do _ <- getLine
-                       forM_ threads killThread
+            threads <- mapM runServer iconf
+            forM threads $
+              \tid -> putStrLn $ mappend "Created thread with " 
+                                         show tid
+            _ <- getLine
+            forM_ threads killThread
 
 icebotPI :: ParserInfo Args
 icebotPI =
@@ -76,16 +72,11 @@ icebotParser =
                       ,metavar "PATH"
                       ,value "icebot.yaml"
                       ,help "The path to the configuration file."
-                      ,showDefault]) <*>
-   switch (mconcat [long "repl"
-                   ,long "interactive"
-                   ,short 'i'
-                   ,help "Start the repl"
-                   ,showDefault])) <|>
+                      ,showDefault])) <|>
   (flag' ConfigExample
          (mconcat [long "config-example"
                   ,short 'e'
                   ,help "Show an example configuration file"]))
 
-data Args = WithConfigFile FilePath Bool
+data Args = WithConfigFile FilePath
           | ConfigExample
