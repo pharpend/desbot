@@ -28,42 +28,55 @@
 
 module Main where
 
+import Control.Applicative
 import Control.Concurrent
 import Control.Monad
-import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as B8
-import Network
-import Prelude hiding (log)
-import System.IO
+import Network.IRC.Icebot
+import Paths_icebot
+import Options.Applicative
 import System.Directory
-import System.Exit
 
 main :: IO ()
-main = do fs <- freenodeSocket  
-          runBot fs
+main =
+  do args <- execParser icebotPI
+     case args of
+       ConfigExample ->
+         getDataFileName "res/config-example.yaml" >>=
+         makeAbsolute >>=
+         B.readFile >>=
+         B8.putStrLn
+       WithConfigFile fp ->
+         do path <- makeAbsolute fp
+            iconf <- runExceptional =<< readConfigFile fp
+            threads <-
+              forM iconf
+                   (\c ->
+                      do tid <- runServer c
+                         putStrLn ("Created thread with " ++ show tid)
+                         return tid)
+            _ <- getLine
+            forM_ threads killThread
 
-freenodeSocket :: IO Handle
-freenodeSocket = do hdl <- connectTo "irc.freenode.net" (PortNumber 6667)
-                    hSetBinaryMode hdl True
-                    hSetBuffering hdl NoBuffering
-                    return hdl
+icebotPI :: ParserInfo Args
+icebotPI =
+  info (helper <*> icebotParser)
+       (mconcat [fullDesc,progDesc "A useless IRC bot"])
 
-initialCommands :: [ByteString]
-initialCommands = ["NICK snowbot-test"
-                  ,"USER snowbot 0 * :information"
-                  ,"JOIN #snowdrift"]
+icebotParser :: Parser Args
+icebotParser =
+  (WithConfigFile <$>
+   strOption (mconcat [long "config-file"
+                      ,short 'c'
+                      ,metavar "PATH"
+                      ,value "icebot.yaml"
+                      ,help "The path to the configuration file."
+                      ,showDefault])) <|>
+  (flag' ConfigExample
+         (mconcat [long "config-example"
+                  ,short 'e'
+                  ,help "Show an example configuration file"]))
 
-writeCommand :: ByteString -> Handle -> IO ()
-writeCommand bs hdl = do B.hPut hdl (mappend bs "\r\n")
-                         log (mconcat ["> ", bs])
-
-log :: ByteString -> IO ()
-log line = do path <- makeAbsolute "freenode.log"
-              B.appendFile path (mappend line "\n")
-
-runBot :: Handle -> IO ()
-runBot hdl = do forM_ initialCommands $
-                  \c -> writeCommand c hdl
-                forever $ B.hGetLine hdl >>=
-                          log
+data Args = WithConfigFile FilePath
+          | ConfigExample
