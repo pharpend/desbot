@@ -79,14 +79,17 @@ data Server =
 
 
 instance FromJSON Server where
-  parseJSON (Object v) = Server <$> v .: "nick"
-                                <*> v .:? "username" .!= v .: "nick"
-                                <*> v .:? "password" .!= NoPassword
-                                <*> v .:? "channels" .!= []
-                                <*> v .:? "id" .!= v .: "hostname"
-                                <*> v .: "hostname"
-                                <*> v .:? "port" .!= 6667
-                                <*> v .:? "log-file" .!= "/dev/null"
+  parseJSON (Object v) =
+    do nick <- v .: "nick"
+       hostname <- v .: "hostname"
+       Server nick <$>
+         v .:? "username" .!= nick <*>
+         v .:? "password" .!= NoPassword <*>
+         v .:? "channels" .!= [] <*>
+         v .:? "id" .!= (pack hostname) <*>
+         pure hostname <*>
+         v .:? "port" .!= 6667 <*>
+         v .:? "log-file" .!= "/dev/null"
   parseJSON _ = mzero
 
 instance ToJSON Server where
