@@ -36,7 +36,7 @@ source-repository this
 library
   hs-source-dirs:      lib
   default-language:    Haskell2010
-  ghc-options:         -Wall
+  ghc-options:         -Wall -fno-warn-unused-do-bind
   other-extensions:
     LambdaCase
     OverloadedStrings
