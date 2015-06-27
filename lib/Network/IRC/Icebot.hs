@@ -36,7 +36,10 @@ module Network.IRC.Icebot
   , readConfig
   , readConfigFile
     -- * Running the server
+  , Threads
   , runServer
+  , repl
+  , iceParse
   )
   where
 
@@ -48,10 +51,10 @@ import Data.Text (Text, pack)
 import qualified Data.Text.IO as T
 import Data.Yaml
 import Network
-import Paths_icebot
+import System.Console.Readline
 import System.Directory
-import System.Exit
 import System.IO
+import Text.Parsec
 
 -- |The Icebot configuration is a list of servers to connect to.
 type IceConfig = [Server]
@@ -65,7 +68,7 @@ data Server =
          ,srvId :: Text
          ,srvHostname :: HostName
          ,srvPort :: Integer
-         ,srvLogFile :: Maybe FilePath
+         ,srvLogFile :: FilePath
          }
   deriving (Eq,Show)
 
@@ -78,7 +81,7 @@ instance FromJSON Server where
                                 <*> v .: "id"
                                 <*> v .: "hostname"
                                 <*> v .: "port"
-                                <*> v .: "log-file"
+                                <*> v .:? "log-file" .!= "/dev/null"
   parseJSON _ = mzero
 
 instance ToJSON Server where
@@ -140,7 +143,7 @@ readConfig = do path <- exceptIO $ makeAbsolute "icebot.yaml"
                   Success pth -> readConfigFile pth
 
 -- |Connect to a server.
-runServer :: Server -> IO ThreadId
+runServer :: Server -> IO ()
 runServer srv =
   do hdl <-
        connectTo (srvHostname srv)
@@ -150,7 +153,7 @@ runServer srv =
      writeHdl hdl $
        mappend "NICK " (srvNick srv)
      writeHdl hdl $
-       mconcat ["USER ",srvNick srv," 0 * :icebot!"]
+       mconcat ["USER ",srvUsername srv," 0 * :icebot!"]
      forM_ (srvChannels srv) $
        \chan ->
          writeHdl hdl $
@@ -167,13 +170,43 @@ runServer srv =
        NickServPassword pwd ->
          writeHdl hdl
                   (mconcat ["PRIVMSG NickServ :IDENTIFY ",srvNick srv," ",pwd])
-     forkIO (forever (do hdlOpen <- hIsOpen hdl
-                         unless hdlOpen exitSuccess))
   where writeHdl hdl txt =
           do T.hPutStr hdl (mappend txt "\r\n")
-             case srvLogFile srv of
-               Nothing -> return ()
-               Just fp ->
-                 do fp' <- makeAbsolute fp
-                    T.appendFile fp'
-                                 (mappend txt "\n")
+             T.appendFile (srvLogFile srv)
+                          (mappend txt "\n")
+
+type Threads = [(ThreadId, Server)]
+
+-- |Run the read-eval-print loop
+repl :: Threads -> IO ()
+repl srvs =
+  readline ">>= " >>=
+  \case
+    Nothing -> T.putStrLn "\nGoodbye!" 
+    Just "quit" -> T.putStrLn "\nGoodbye!" 
+    Just "exit" -> T.putStrLn "\nGoodbye!" 
+    Just s ->
+      do addHistory s
+         iceParse srvs s
+         repl srvs
+
+iceParse :: Threads -> String -> IO ()
+iceParse ts "" = return ()
+iceParse ts command =
+  case runParser iceParser () "keyboard input" (pack command) of
+    Left err -> print err
+    Right Help -> putStrLn "No help for you!"
+    Right Threads ->
+      forM_ ts $
+      \(tid,srv) ->
+        T.putStrLn (mconcat ["Server ",srvId srv," on ",pack $ show tid])
+
+data Command = Help
+             | Threads
+
+iceParser :: Parsec Text () Command
+iceParser = helpParser <|> threadsParser
+  where helpParser = do try $ string "help"
+                        return Help
+        threadsParser = do try $ string "threads"
+                           return Threads
