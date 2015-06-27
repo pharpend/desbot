@@ -13,7 +13,18 @@ I have tested this on Arch Linux with stack 0.0.3
         cd icebot
         stack install
 
-I would add usage, but currently it does nothing, so there is no usage.
+## Usage
+
+```
+Usage: icebot ([-c|--config-file PATH] | [-e|--config-example])
+  A useless IRC bot
+
+Available options:
+  -h,--help                Show this help text
+  -c,--config-file PATH    The path to the configuration
+                           file. (default: "icebot.yaml")
+  -e,--config-example      Show an example configuration file
+```
 
 [1]: https://webchat.freenode.net/?channels=#snowdrift
 [2]: https://github.com/commercialhaskell/stack/wiki/Downloads
