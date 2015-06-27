@@ -67,3 +67,4 @@ executable icebot
     , directory
     , icebot
     , optparse-applicative
+    , text
