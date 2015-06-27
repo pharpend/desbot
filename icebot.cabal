@@ -20,6 +20,9 @@ cabal-version:       >=1.10
 extra-source-files:  
   LICENSE
   README.md
+  res/config-example.yaml
+data-files:  
+  res/config-example.yaml
 
 source-repository head
   type:                git
@@ -42,7 +45,6 @@ library
     , directory
     , exceptional >=0.1.5
     , network
-    , parallel
     , text
     , yaml
   exposed-modules:
@@ -50,7 +52,8 @@ library
   
 executable icebot
   main-is:             Main.hs
-  -- other-modules:       
+  other-modules:       
+    Paths_icebot
   other-extensions:    
     OverloadedStrings
   hs-source-dirs:      src
@@ -59,13 +62,6 @@ executable icebot
   build-depends:
       base ==4.8.*
     , bytestring
-    , conduit >=1.2.3
-    , conduit-combinators >=1.0.0
-    , conduit-extra
     , directory
     , icebot
-    , mtl
-    , parallel
-    , resourcet
-    , network
-    , safe
+    , optparse-applicative
