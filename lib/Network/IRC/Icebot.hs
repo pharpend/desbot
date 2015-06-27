@@ -177,35 +177,53 @@ runServer srv =
 type Threads = [(ThreadId, Server)]
 
 -- |Run the read-eval-print loop
+-- 
+-- This is unfinished
 repl :: Threads -> IO ()
 repl srvs =
   readline ">>= " >>=
   \case
-    Nothing -> T.putStrLn "\nGoodbye!" 
-    Just "quit" -> T.putStrLn "\nGoodbye!" 
-    Just "exit" -> T.putStrLn "\nGoodbye!" 
+    Nothing -> killThreads
+    Just "quit" -> killThreads
+    Just "exit" -> killThreads
     Just s ->
       do addHistory s
-         iceParse srvs s
-         repl srvs
+         repl =<< iceParse srvs s
+ where killThreads = do forM_ srvs (\(tid, _) -> killThread tid)
+                        putStrLn "\nGoodbye!"
 
-iceParse :: Threads -> String -> IO ()
-iceParse ts "" = return ()
-iceParse ts command =
+iceParse :: Threads -> String -> IO Threads
+iceParse srvs "" = return srvs
+iceParse srvs command =
   case runParser iceParser () "keyboard input" (pack command) of
-    Left err -> print err
-    Right Help -> putStrLn "No help for you!"
+    Left err -> do print err
+                   return srvs
+    Right Help -> do putStrLn "No help for you!"
+                     return srvs
     Right Threads ->
-      forM_ ts $
-      \(tid,srv) ->
-        T.putStrLn (mconcat ["Server ",srvId srv," on ",pack $ show tid])
+      do forM_ srvs $
+          \(tid,srv) ->
+            T.putStrLn (mconcat ["Server ",srvId srv," on ",pack $ show tid])
+         return srvs
+    Right (KillThread nom) ->
+      do putStrLn "No"
+         return srvs
 
 data Command = Help
+             | KillThread Text
              | Threads
 
 iceParser :: Parsec Text () Command
-iceParser = helpParser <|> threadsParser
+iceParser = helpParser <|> 
+            threadsParser <|> 
+            killThreadParser
   where helpParser = do try $ string "help"
                         return Help
         threadsParser = do try $ string "threads"
                            return Threads
+ 
+killThreadParser :: Parsec Text () Command
+killThreadParser = try $ do string "killthread"
+                            skipMany1 (oneOf " \t")
+                            tnum <- many1 alphaNum
+                            return (KillThread (pack tnum))
