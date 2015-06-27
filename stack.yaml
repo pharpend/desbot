@@ -1,5 +1,7 @@
 flags: {}
 packages:
-- '.'
-extra-deps: [ exceptional-0.1.5.1 ]
+  - '.'
+extra-deps:
+  - exceptional-0.1.5.1
+  - readline-1.0.3.0
 resolver: nightly-2015-06-22

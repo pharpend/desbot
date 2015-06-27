@@ -43,6 +43,7 @@ library
     , directory
     , exceptional >=0.1.5
     , network
+    , readline
     , text
     , yaml
   exposed-modules:
