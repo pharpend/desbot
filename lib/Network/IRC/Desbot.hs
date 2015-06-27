@@ -62,6 +62,7 @@ module Network.IRC.Desbot
 
 import Network.IRC.Desbot.Config
 import Network.IRC.Desbot.Parser
+import Network.IRC.Desbot.REPL
 
 import Control.Concurrent
 import Control.Exceptional

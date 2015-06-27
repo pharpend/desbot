@@ -49,6 +49,7 @@ library
     Network.IRC.Desbot
     Network.IRC.Desbot.Config
     Network.IRC.Desbot.Parser
+    Network.IRC.Desbot.REPL
   
 executable desbot
   main-is:             Main.hs
