@@ -46,7 +46,6 @@ library
     , exceptional >=0.1.5
     , network
     , parsec
-    , readline
     , text
     , yaml
   exposed-modules:

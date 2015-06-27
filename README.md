@@ -4,7 +4,7 @@ This is an IRC bot for the [`#snowdrift` channel on FreeNode][1].
 
 ## Installation
 
-I have tested this on Arch Linux with stack 0.0.3
+I have tested this on Arch Linux with stack 0.1.1
 
 1.  Install [stack][2] and [git][3].
 2.  Run these commands in a terminal:
