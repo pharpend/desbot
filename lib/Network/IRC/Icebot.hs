@@ -68,19 +68,18 @@ data Server =
          ,srvId :: Text
          ,srvHostname :: HostName
          ,srvPort :: Integer
-         ,srvLogFile :: FilePath
-         }
+         ,srvLogFile :: FilePath}
   deriving (Eq,Show)
 
 
 instance FromJSON Server where
   parseJSON (Object v) = Server <$> v .: "nick"
-                                <*> v .: "username"
+                                <*> v .:? "username" .!= v .: "nick"
                                 <*> v .:? "password" .!= NoPassword
-                                <*> v .: "channels"
-                                <*> v .: "id"
+                                <*> v .:? "channels" .!= []
+                                <*> v .:? "id" .!= v .: "hostname"
                                 <*> v .: "hostname"
-                                <*> v .: "port"
+                                <*> v .:? "port" .!= 6667
                                 <*> v .:? "log-file" .!= "/dev/null"
   parseJSON _ = mzero
 
