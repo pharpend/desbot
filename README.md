@@ -16,6 +16,8 @@ I have tested this on Arch Linux with stack 0.1.1
 
 ## Usage
 
+To run the bot on your own system:
+
 ```
 Usage: icebot ([-c|--config-file PATH] | [-e|--config-example])
   A useless IRC bot
@@ -26,6 +28,8 @@ Available options:
                            file. (default: "icebot.yaml")
   -e,--config-example      Show an example configuration file
 ```
+
+Press `RET` to kill the bot.
 
 [1]: https://webchat.freenode.net/?channels=#snowdrift
 [2]: https://github.com/commercialhaskell/stack/wiki/Downloads
