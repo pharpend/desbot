@@ -28,7 +28,7 @@
 
 module Main where
 
-import Network.IRC.Desbot
+import Network.IRC.Desbot hiding (Parser)
 import Options.Applicative
 import System.Directory
 import System.IO
