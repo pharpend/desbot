@@ -11,12 +11,11 @@ At the moment, the bot responds to three commands:
 3. `!robotrollcall`
 
 It's a really crappy bot at the moment. Any help is appreciated. See the
-[coding guidelines section][5] of this document for additional
-information.
+"Coding guidelines" section of this document for additional information.
 
 Bugs and general questions should be reported in the
-[GitHub bug tracker][6]. See the [contact section][7] of this document
-for more information.
+[GitHub bug tracker][6]. See the "Contact" section of this document for
+more information.
 
 ## Installation and Usage
 
@@ -45,7 +44,7 @@ Available options:
 
 Press `RET` to kill the bot.
 
-## Coding guidelines {#guidelines}
+## Coding guidelines
 
 This program is split into two separate components (see
 [`desbot.cabal`][4]):
@@ -75,9 +74,7 @@ To use stack:
 [2]: https://github.com/commercialhaskell/stack/wiki/Downloads
 [3]: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 [4]: desbot.cabal
-[5]: #guidelines
 [6]: https://github.com/pharpend/desbot/issues
-[7]: #contact
 [8]: https://github.com/chrisdone/haskell-style-guide/blob/master/README.md
 [9]: https://github.com/commercialhaskell/stack/wiki
 [10]: https://halcyon.sh/
