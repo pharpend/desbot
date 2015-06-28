@@ -60,21 +60,35 @@ privMsgParser p =
      chanName <- takeWhile1 (/= ' ')
      space
      char ':'
-     cmd <-
-       (do string "!robotrollcall"
-           return RobotRollCall) <|>
-       (do char '~'
-           manyTill anyChar space >>=
-             \case
-               "help" -> return Help
-               "?" -> return Help
-               "source" -> return Source
-               "src" -> return Source
-               "robotrollcall" ->
-                 return RobotRollCall
-               x ->
-                 fail (mconcat ["",x," is not a command I recognize."]))
+     char '~'
+     cmd <- commandParser
      return $ PrivMsg chanName p cmd
+
+-- |This is the same as 'privMsgParser', but it doesn't need the
+-- @PRIVMSG person :@ before the message
+commandParser :: Parser Command
+commandParser =
+  manyTill anyChar space >>=
+  \case
+    "help" -> return Help
+    "?" -> return Help
+    "source" -> return Source
+    "src" -> return Source
+    "robotrollcall" -> return RobotRollCall
+    x ->
+      fail (mconcat [x," is not a command I recognize."])
+
+-- |This is a wrapper around 'commandParser'. It parses a line.
+parseCommand :: Text -> Either String Command
+parseCommand = parseOnly (commandParser <* endOfInput)
+
+-- |Convert a 'Command' into a 'Text' response
+runCommand :: Command -> Text
+runCommand cmd =
+  case cmd of
+    Help -> "No help for you!"
+    Source -> "https://github.com/pharpend/desbot"
+    RobotRollCall -> "desbot reporting for duty!"
 
 
 -- |At the moment, two types of messages are supported:

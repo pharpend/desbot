@@ -19,7 +19,7 @@
 
 -- | 
 -- Module      : Main
--- Description : The Main module for desbot
+-- Description : The desbot repl
 -- Copyright   : Copyright (c) 2015, Peter Harpending.
 -- License     : AGPL-3
 -- Maintainer  : Peter Harpending <peter@harpending.org>
@@ -28,15 +28,7 @@
 
 module Main where
 
-import Control.Applicative
-import Control.Concurrent
-import Control.Monad
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Char8 as B8
-import qualified Data.Text as T
-import qualified Data.Text.IO as T
 import Network.IRC.Desbot
-import Paths_desbot
 import Options.Applicative
 import System.Directory
 import System.IO
@@ -46,30 +38,16 @@ main =
   do args <- execParser desbotPI
      hSetBuffering stdout NoBuffering
      case args of
-       ConfigExample ->
-         getDataFileName "res/config-example.yaml" >>=
-         makeAbsolute >>=
-         B.readFile >>=
-         B8.putStrLn
        WithConfigFile fp ->
-         do path <- makeAbsolute fp
-            IceConfig servers <- runExceptional =<< readConfigFile fp
-            threads <- mapM runServer servers
-            forM (zip threads servers) $
-              \(tid,srv) ->
-                T.putStrLn $
-                mconcat ["Created thread with "
-                        ,T.pack $ show tid
-                        ," for server "
-                        ,srvId srv
-                        ,"."]
-            _ <- getLine
-            forM_ threads killThread
+         do Config replconf _ <- makeAbsolute fp >>= readConfigFile >>= runExceptional
+            repl replconf
+
+data Args = WithConfigFile FilePath
 
 desbotPI :: ParserInfo Args
 desbotPI =
   info (helper <*> desbotParser)
-       (mconcat [fullDesc,progDesc "A useless IRC bot"])
+       (mconcat [fullDesc,progDesc "REPL to test commands for desbot"])
 
 desbotParser :: Parser Args
 desbotParser =
@@ -79,11 +57,4 @@ desbotParser =
                       ,metavar "PATH"
                       ,value "desbot.yaml"
                       ,help "The path to the configuration file."
-                      ,showDefault])) <|>
-  (flag' ConfigExample
-         (mconcat [long "config-example"
-                  ,short 'e'
-                  ,help "Show an example configuration file"]))
-
-data Args = WithConfigFile FilePath
-          | ConfigExample
+                      ,showDefault]))

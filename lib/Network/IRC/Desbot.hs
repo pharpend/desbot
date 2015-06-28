@@ -40,7 +40,7 @@ module Network.IRC.Desbot
   ( -- ** Convenience re-exports
     module Control.Exceptional
     -- * Configuration
-  , IceConfig(..)
+  , Config(..)
   , Server(..)
   , Password(..)
   , readConfig
@@ -51,12 +51,19 @@ module Network.IRC.Desbot
   , ircParser
   , pingParser
   , privMsgParser
+  , commandParser
+  , parseCommand
+  , runCommand
     -- ** Types
   , Message(..)
   , Command (..)
     -- *** Semantic aliases for 'Text'
   , Channel
   , Person
+    -- * The REPL
+  , repl
+  , REPLConf(..)
+  , nullREPLConf
   )
   where
 

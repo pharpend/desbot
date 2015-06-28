@@ -31,23 +31,28 @@
 
 module Network.IRC.Desbot.Config where
 
+import Network.IRC.Desbot.REPL
+
 import Control.Exceptional
 import Control.Monad (mzero)
 import Data.String (IsString(..))
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Text.IO as T
 import Data.Yaml
 import Network (HostName)
 import System.Directory (makeAbsolute)
 
--- |The Desbot configuration is a list of servers to connect to.
-newtype IceConfig = IceConfig [Server]
-  deriving (Eq, Show)
+-- |The configuration when running desbot, or desbot's REPL
+data Config =
+  Config {configREPL :: REPLConf
+         ,configServers :: [Server]}
+  deriving (Eq,Show)
 
-instance FromJSON IceConfig where
-  parseJSON (Array v) = IceConfig <$> parseJSON (Array v)
-  parseJSON (Object v) = IceConfig <$> v .: "servers"
+instance FromJSON Config where
+  parseJSON (Array v) =
+    Config <$> pure nullREPLConf <*> parseJSON (Array v)
+  parseJSON (Object v) = Config <$> v .:? "repl" .!= nullREPLConf <*>
+                         v .: "servers"
   parseJSON _ = mzero
 
 -- |Information on connecting to a server
@@ -107,10 +112,10 @@ instance IsString Password where
   fromString "" = NoPassword
   fromString s = NickServPassword $ T.pack s
 
--- |Try to read a file containing an 'IceConfig'. This is
+-- |Try to read a file containing an 'Config'. This is
 -- exception-safe, in that all exceptions are caught in the
 -- 'Exceptional' monad, rather than the 'IO' monad.
-readConfigFile :: FilePath -> IO (Exceptional IceConfig)
+readConfigFile :: FilePath -> IO (Exceptional Config)
 readConfigFile fp =
   do decoded <- exceptIO $ decodeFileEither fp
      return $ case decoded of
@@ -119,8 +124,8 @@ readConfigFile fp =
                 Success (Right e) -> Success e
 
 -- |Read desbot.yaml from the current directory, try to marshal it into
--- an 'IceConfig'.
-readConfig :: IO (Exceptional IceConfig)
+-- an 'Config'.
+readConfig :: IO (Exceptional Config)
 readConfig = do path <- exceptIO $ makeAbsolute "desbot.yaml"
                 case path of
                   Failure err -> return $ Failure err

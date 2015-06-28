@@ -1,3 +1,6 @@
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 -- desbot - bot for #snowdrift on FreeNode
 -- Copyright (c) 2015, Peter Harpending.
 -- 
@@ -30,3 +33,48 @@
 
 module Network.IRC.Desbot.REPL where
 
+import Network.IRC.Desbot.Parser
+
+import Control.Monad
+import qualified Data.Text as T
+import Data.Yaml
+import System.Console.Readline
+import System.Exit
+
+-- |Run the repl. This only works on POSIX.
+repl :: REPLConf -> IO ()
+repl conf =
+  do let prompt = replPrompt conf
+     readline prompt >>=
+       \case
+         Just line ->
+           do case parseCommand (T.pack line) of
+                Left err ->
+                  do putStrLn "Error on input: "
+                     print err
+                     putStrLn "Sorry the error messages are so crappy."
+                     putStrLn "The error messages suck because the parser needs to be fast."
+                     addHistory line
+                     repl conf
+                Right msg ->
+                  putStrLn (T.unpack (runCommand msg))
+         Nothing ->
+           do putStrLn "\nGoodbye!"
+              exitSuccess
+
+
+-- |REPL configuration
+data REPLConf = REPLConf {replPrompt :: String
+                         ,replName :: String}
+  deriving (Eq, Show)
+
+instance FromJSON REPLConf where
+  parseJSON (Object v)  = REPLConf <$> v .:? "prompt" .!= ">>= "
+                                   <*> v .:? "name" .!= "luser"
+  parseJSON _ = mzero
+
+-- |Default REPL configuration
+-- 
+-- > nullREPLConf = REPLConf ">>= " "luser"
+nullREPLConf :: REPLConf
+nullREPLConf = REPLConf ">>= " "luser"
