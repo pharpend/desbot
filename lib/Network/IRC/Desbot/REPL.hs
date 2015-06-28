@@ -36,7 +36,7 @@ module Network.IRC.Desbot.REPL where
 import Network.IRC.Desbot.Parser
 
 import Control.Monad
-import qualified Data.Text as T
+import qualified Data.ByteString.Char8 as BO
 import Data.Yaml
 import System.Console.Readline
 import System.Exit
@@ -48,16 +48,17 @@ repl conf =
      readline prompt >>=
        \case
          Just line ->
-           do case parseCommand (T.pack line) of
+           do case parsePrivateCommand (BO.pack line)
+                                       "desbot-repl"
+                                       "luser-input" of
                 Left err ->
-                  do putStrLn "Error on input: "
-                     print err
-                     putStrLn "Sorry the error messages are so crappy."
-                     putStrLn "The error messages suck because the parser needs to be fast."
+                  do print err
                      addHistory line
                      repl conf
                 Right msg ->
-                  putStrLn (T.unpack (runCommand msg))
+                  do print msg
+                     addHistory line
+                     repl conf
          Nothing ->
            do putStrLn "\nGoodbye!"
               exitSuccess

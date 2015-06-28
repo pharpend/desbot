@@ -38,11 +38,12 @@ library
     LambdaCase
     OverloadedStrings
   build-depends:
-      attoparsec
-    , base ==4.8.*
+      base ==4.8.*
+    , bytestring
     , directory
     , exceptional >=0.1.5
     , network
+    , parsec
     , readline
     , text
     , yaml
@@ -53,6 +54,7 @@ library
     Network.IRC.Desbot.REPL
 
 executable desbot
+  buildable: False
   main-is:             desbot.hs
   other-modules:
     Paths_desbot
@@ -71,6 +73,7 @@ executable desbot
     , text
 
 executable desbot-repl
+  buildable: False
   main-is:             desbot-repl.hs
   other-modules:
     Paths_desbot
