@@ -249,7 +249,7 @@ commandParser =
 -- This succeeds on @~bugs@ or @~bug-reports@
 bugsParser :: Parser Command
 bugsParser =
-  do string "bugs" <|> string "bug-reports"
+  do trystr "bugs" <|> trystr "bug-reports"
      return Bugs
 
 -- |Parse the 'Help' command.
@@ -257,7 +257,7 @@ bugsParser =
 -- This can be queried with either @~help@ or @~?@.
 helpParser :: Parser Command
 helpParser =
-  do string "help" <|> string "?"
+  do trystr "help" <|> trystr "?"
      return Help
 
 -- |Parse the 'License' command.
@@ -265,7 +265,7 @@ helpParser =
 -- This succeeds on @~license@ or @~terms@
 licenseParser :: Parser Command
 licenseParser =
-  do string "license" <|> string "terms"
+  do trystr "license" <|> trystr "terms"
      return License
 
 -- |Parse the 'Manual' command.
@@ -273,7 +273,7 @@ licenseParser =
 -- This succeeds on @~manual@ or @~man@
 manualParser :: Parser Command
 manualParser =
-  do string "manual" <|> string "man"
+  do trystr "manual" <|> trystr "man"
      return Manual
 
 -- |Parse the 'Source' command.
@@ -281,6 +281,8 @@ manualParser =
 -- This succeeds on @~source@ or @~src@
 sourceParser :: Parser Command
 sourceParser =
-  do string "source" <|> string "src"
+  do trystr "source" <|> trystr "src"
      return Source
 
+trystr :: String -> Parser String
+trystr = try . string
