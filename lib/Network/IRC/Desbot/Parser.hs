@@ -97,7 +97,10 @@ type FromWhom = String
 type Channel = String
 
 -- |A list of commands that can be requested
-data Command = Help
+data Command = Bugs
+             | Help
+             | License
+             | Manual
              | Source
   deriving (Eq, Show)
 
@@ -188,7 +191,18 @@ chanCommandParser =
      cmd <- commandParser
      return (atWhom,cmd)
 
--- |Parse a command sent in a private message
+-- |Take a 'ByteString', try to parse it.
+-- 
+-- Primarily for use with the REPL
+runPrivateCommand :: ByteString -- ^Input
+                  -> BotState
+                  -> Either ParseError ByteString
+runPrivateCommand input bs =
+  runCommand bs <$> parsePrivateCommand input bs
+
+-- |Parse a command sent in a private message.
+-- 
+-- Primarily for use with the REPL
 parsePrivateCommand :: ByteString -- ^Input
                     -> BotState
                     -> Either ParseError Command
@@ -199,29 +213,44 @@ parsePrivateCommand input bs =
 -- messages don't need the '~' as a prefix, but it's not verboten.
 privateCommandParser :: Parser Command
 privateCommandParser =
-  do optry $ do nickParser
-                oneOf ":,"
-     optry $ many1 space
-     optry $ char '~'
-     commandParser
+  label (do optry $ do nickParser
+                       oneOf ":,"
+            optry $ many1 space
+            optry $ char '~'
+            commandParser)
+        "a command."
   where optry = optional . try
 
 -- |Take a 'Command', send back a 'ByteString'
 runCommand :: BotState -> Command -> ByteString
+runCommand bs Bugs = B8.pack (botBugs bs)
 runCommand _ Help =
   T.encodeUtf8
     (T.intercalate
        "\r\n"
        ["I am desbot, the channel bot and dictator."
        ,"My full manual can be found with `~manual`."])
+runCommand _ License = "https://gnu.org/licenses/agpl"
+runCommand bs Manual = B8.pack (botManual bs)
 runCommand bs Source = B8.pack (botSource bs)
 
 -- |Parse a 'Command'
 commandParser :: Parser Command
 commandParser =
-  helpParser <|>
-  sourceParser <?>
-  "Parsing of ~command"
+  bugsParser 
+  <|> helpParser 
+  <|> licenseParser
+  <|> manualParser 
+  <|> sourceParser 
+  <?> "Parsing of your command"
+
+-- |Parse the 'Bugs' command.
+--
+-- This succeeds on @~bugs@ or @~bug-reports@
+bugsParser :: Parser Command
+bugsParser =
+  do string "bugs" <|> string "bug-reports"
+     return Bugs
 
 -- |Parse the 'Help' command.
 --
@@ -230,6 +259,22 @@ helpParser :: Parser Command
 helpParser =
   do string "help" <|> string "?"
      return Help
+
+-- |Parse the 'License' command.
+--
+-- This succeeds on @~license@ or @~terms@
+licenseParser :: Parser Command
+licenseParser =
+  do string "license" <|> string "terms"
+     return License
+
+-- |Parse the 'Manual' command.
+--
+-- This succeeds on @~manual@ or @~man@
+manualParser :: Parser Command
+manualParser =
+  do string "manual" <|> string "man"
+     return Manual
 
 -- |Parse the 'Source' command.
 --

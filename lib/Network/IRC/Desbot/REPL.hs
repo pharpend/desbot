@@ -48,14 +48,14 @@ repl conf =
      readline prompt >>=
        \case
          Just line ->
-           do case parsePrivateCommand (BO.pack line)
-                                       nullBotState of
+           do case runPrivateCommand (BO.pack line) nullBotState of
                 Left err ->
-                  do print err
+                  do putStrLn "Error in parsing command line:"
+                     print err
                      addHistory line
                      repl conf
                 Right msg ->
-                  do print msg
+                  do BO.putStrLn msg
                      addHistory line
                      repl conf
          Nothing ->

@@ -70,11 +70,15 @@ module Network.IRC.Desbot
   , chanParser
   , chanCommandParser
     -- **** NB: There is no @parseCommand@, because parsing a 'Command' requires a context.
+  , runPrivateCommand
   , parsePrivateCommand
   , privateCommandParser
   , commandParser
   , runCommand
+  , bugsParser
   , helpParser
+  , licenseParser
+  , manualParser
   , sourceParser
   )
   where
