@@ -1,5 +1,5 @@
 flags: {}
 packages:
   - '.'
-extra-deps: [tac
+extra-deps: []
 resolver: nightly-2015-06-28
