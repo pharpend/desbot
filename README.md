@@ -15,6 +15,8 @@ have an older version.
 
 To use stack:
 
+    git clone git://github.com/pharpend/desbot.git
+    cd desbot
     stack setup
     stack build
     stack exec -- desbot --help
