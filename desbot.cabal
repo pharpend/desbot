@@ -56,7 +56,6 @@ library
     Network.IRC.Desbot.REPL
 
 executable desbot
-  buildable: False
   main-is:             desbot.hs
   other-modules:
     Paths_desbot
@@ -72,22 +71,5 @@ executable desbot
     , directory
     , desbot
     , optparse-applicative
-    , text
-
-executable desbot-repl
-  main-is:             desbot-repl.hs
-  other-modules:
-    Paths_desbot
-  other-extensions:
-    OverloadedStrings
-  hs-source-dirs:      exe
-  default-language:    Haskell2010
-  ghc-options:
-    -Wall -threaded -fno-warn-unused-do-bind
-  build-depends:
-      base ==4.8.*
-    , desbot
-    , directory
-    , optparse-applicative
-    , pager >=0.1.1
+    , pager
     , text

@@ -47,7 +47,7 @@ import System.Directory (makeAbsolute)
 -- |The configuration when running desbot, or desbot's REPL
 data Config =
   Config {configBot :: BotConf
-         ,configRepl :: REPLConf
+         ,configREPL :: REPLConf
          ,configServers :: [Server]}
   deriving (Eq,Show)
 

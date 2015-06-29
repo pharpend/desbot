@@ -29,61 +29,67 @@
 module Main where
 
 import Control.Applicative
-import Control.Concurrent
-import Control.Monad
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as B8
-import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import Network.IRC.Desbot
+import Network.IRC.Desbot hiding (Manual, Parser)
 import Paths_desbot
 import Options.Applicative
 import System.Directory
 import System.IO
+import System.Pager
 
 main :: IO ()
 main =
-  do args <- execParser desbotPI
+  do (WithConfigFile fp act) <- execParser desbotPI
      hSetBuffering stdout NoBuffering
-     case args of
+     path <- makeAbsolute fp
+     config <- runExceptional =<< readConfigFile path
+     case act of
+       Bot ->
+         fail "You can't run the bot just yet"
        ConfigExample ->
-         getDataFileName "res/config-example.yaml" >>=
-         makeAbsolute >>=
+         getDataFileName "res/config-example.yaml" >>= makeAbsolute >>=
          B.readFile >>=
-         B8.putStrLn
-       WithConfigFile fp ->
-         do path <- makeAbsolute fp
-            Config _ servers <- runExceptional =<< readConfigFile path
-            threads <- mapM runServer servers
-            forM (zip threads servers) $
-              \(tid,srv) ->
-                T.putStrLn $
-                mconcat ["Created thread with "
-                        ,T.pack $ show tid
-                        ," for server "
-                        ,srvId srv
-                        ,"."]
-            _ <- getLine
-            forM_ threads killThread
+         B8.putStr
+       REPL -> repl (configREPL config)
+       Manual ->
+         getDataFileName "MANUAL.md" >>= T.readFile >>= printOrPage
+
+data Args = WithConfigFile FilePath Action
+
+data Action
+  = REPL
+  | ConfigExample
+  | Manual
+  | Bot
 
 desbotPI :: ParserInfo Args
 desbotPI =
   info (helper <*> desbotParser)
-       (mconcat [fullDesc,progDesc "A useless IRC bot"])
+       (mconcat [fullDesc,progDesc "A useless IRC bot. For a manual see <https://github.com/pharpend/desbot/blob/master/MANUAL.md>."])
 
 desbotParser :: Parser Args
 desbotParser =
-  (WithConfigFile <$>
-   strOption (mconcat [long "config-file"
-                      ,short 'c'
-                      ,metavar "PATH"
-                      ,value "desbot.yaml"
-                      ,help "The path to the configuration file."
-                      ,showDefault])) <|>
-  (flag' ConfigExample
-         (mconcat [long "config-example"
-                  ,short 'e'
-                  ,help "Show an example configuration file"]))
-
-data Args = WithConfigFile FilePath
-          | ConfigExample
+  WithConfigFile <$>
+  strOption (mconcat [long "config-file"
+                     ,short 'c'
+                     ,metavar "PATH"
+                     ,value "desbot.yaml"
+                     ,help "The path to the configuration file."
+                     ,showDefault]) <*>
+  ((flag' ConfigExample
+          (mconcat [long "config-example"
+                   ,short 'e'
+                   ,help "Show an example configuration file"])) <|>
+   (flag' REPL
+          (mconcat [long "repl"
+                   ,long "interactive"
+                   ,short 'i'
+                   ,help "Run a REPL to test commands to desbot."])) <|>
+   (flag' Manual
+          (mconcat [long "manual"
+                   ,long "man"
+                   ,short 'm'
+                   ,help "Show desbot's manual."])) <|>
+   pure Bot)
