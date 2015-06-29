@@ -21,6 +21,15 @@ To use stack:
     stack build
     stack exec -- desbot --help
 
+### Commit messages
+
+You should try to follow the [Erlang OTP git commit guide][12]. I follow
+most of those guidelines, with the exception of "don't end the title
+with a period". It's a force of habit.
+
+It's a good reference if you don't really know how to write good commit
+messages.
+
 ## Contact
 
 * Email: `peter@harpending.org`
@@ -35,3 +44,4 @@ To use stack:
 [9]: https://github.com/commercialhaskell/stack/wiki
 [10]: https://halcyon.sh/
 [11]: MANUAL.md
+[12]: https://github.com/erlang/otp/wiki/Writing-good-commit-messages
