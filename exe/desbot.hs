@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- desbot - bot for #snowdrift on FreeNode
@@ -29,34 +30,59 @@
 module Main where
 
 import Control.Applicative
+import Control.Monad.Trans.Reader
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as B8
+import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Network.IRC.Desbot hiding (Manual, Parser)
 import Paths_desbot
 import Options.Applicative
+import Options.Applicative.Internal
 import System.Directory
-import System.IO
 import System.Pager
 
 main :: IO ()
 main =
-  do (WithConfigFile fp act) <- execParser desbotPI
-     hSetBuffering stdout NoBuffering
-     path <- makeAbsolute fp
-     config <- runExceptional =<< readConfigFile path
-     case act of
+  do Args fp action' <- execParser desbotPI
+     config <-
+       case fp of
+         Just fp -> runExceptional =<< readConfigFile =<< makeAbsolute fp
+         Nothing ->
+           do dataDir <-
+                makeAbsolute =<< getAppUserDataDirectory "desbot"
+              dataDirExists <- doesDirectoryExist dataDir
+              if dataDirExists
+                 then return ()
+                 else do putStrLn (mappend "Creating default desbot configuration directory: "
+                                           dataDir)
+                         createDirectory dataDir
+              let desbotYamlPath =
+                    mappend dataDir "/desbot.yaml"
+              desbotYamlExists <- doesFileExist desbotYamlPath
+              if desbotYamlExists
+                 then return ()
+                 else do putStrLn (mappend "Adding default desbot configuration file to "
+                                           desbotYamlPath)
+                         defaultConfPath <-
+                           getDataFileName "res/config-default.yaml"
+                         defaultConf <- B.readFile defaultConfPath
+                         B.writeFile desbotYamlPath defaultConf
+                         putStrLn "You may want to edit the configuration file, but you are not required to."
+              runExceptional =<<
+                readConfigFile (mappend dataDir desbotYamlPath)
+     case action' of
        Bot ->
          fail "You can't run the bot just yet"
        ConfigExample ->
-         getDataFileName "res/config-example.yaml" >>= makeAbsolute >>=
+         getDataFileName "res/config-default.yaml" >>= makeAbsolute >>=
          B.readFile >>=
          B8.putStr
        REPL -> repl (configREPL config)
        Manual ->
          getDataFileName "MANUAL.md" >>= T.readFile >>= printOrPage
 
-data Args = WithConfigFile FilePath Action
+data Args = Args (Maybe FilePath) Action
 
 data Action
   = REPL
@@ -71,25 +97,40 @@ desbotPI =
 
 desbotParser :: Parser Args
 desbotParser =
-  WithConfigFile <$>
-  strOption (mconcat [long "config-file"
-                     ,short 'c'
-                     ,metavar "PATH"
-                     ,value "desbot.yaml"
-                     ,help "The path to the configuration file."
-                     ,showDefault]) <*>
-  ((flag' ConfigExample
-          (mconcat [long "config-example"
-                   ,short 'e'
-                   ,help "Show an example configuration file"])) <|>
-   (flag' REPL
-          (mconcat [long "repl"
-                   ,long "interactive"
-                   ,short 'i'
-                   ,help "Run a REPL to test commands to desbot."])) <|>
-   (flag' Manual
-          (mconcat [long "manual"
-                   ,long "man"
-                   ,short 'm'
-                   ,help "Show desbot's manual."])) <|>
-   pure Bot)
+  alt [Args <$> customConfigParser <*> actionParser]
+  where alt [] = empty
+        alt (x:xs) = x <|> alt xs
+
+actionParser :: Parser Action
+actionParser =
+  subparser $
+  mconcat [command "config-example"
+                   (info (pure ConfigExample)
+                         (mconcat [fullDesc
+                                  ,progDesc "Show an example configuration file"]))
+          ,command "repl"
+                   (info (pure REPL)
+                         (mconcat [fullDesc
+                                  ,progDesc "Run a REPL to test commands to desbot."]))
+          ,command "manual"
+                   (info (pure Manual)
+                         (mconcat [fullDesc,progDesc "Show desbot's manual."]))
+          ,command "run"
+                   (info (pure Bot)
+                         (mconcat [fullDesc,progDesc "Run the actual bot"]))]
+
+customConfigParser :: Parser (Maybe FilePath)
+customConfigParser =
+  option optionalStr
+         (mconcat [long "config-file"
+                  ,short 'c'
+                  ,metavar "PATH"
+                  ,value Nothing
+                  ,help "The path to the configuration file."])
+
+
+optionalStr :: ReadM (Maybe String)
+optionalStr = eitherReader readString
+  where readString s
+          | T.null (T.strip (T.pack s)) = Right Nothing
+          | otherwise = Right (Just s)
