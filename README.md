@@ -17,7 +17,7 @@ To use stack:
 
     stack setup
     stack build
-    stack exec desbot-repl
+    stack exec -- desbot --help
 
 ## Contact
 
