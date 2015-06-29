@@ -1,6 +1,5 @@
 flags: {}
 packages:
   - '.'
-extra-deps:
-  - readline-1.0.3.0
+extra-deps: [tac
 resolver: nightly-2015-06-28

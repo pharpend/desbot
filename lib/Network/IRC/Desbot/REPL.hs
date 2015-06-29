@@ -38,14 +38,14 @@ import Network.IRC.Desbot.Parser
 import Control.Monad
 import qualified Data.ByteString.Char8 as BO
 import Data.Yaml
-import System.Console.Readline
+import System.Console.Haskeline
 import System.Exit
 
 -- |Run the repl. This only works on POSIX.
 repl :: REPLConf -> IO ()
 repl conf =
   do let prompt = replPrompt conf
-     readline prompt >>=
+     runInputT defaultSettings (getInputLine prompt) >>=
        \case
          Just line ->
            do case runPrivateCommand (BO.pack line)
@@ -53,14 +53,12 @@ repl conf =
                 Left err ->
                   do putStrLn "Error in parsing command line:"
                      print err
-                     addHistory line
                      repl conf
                 Right msg ->
                   do BO.putStrLn msg
-                     addHistory line
                      repl conf
          Nothing ->
-           do putStrLn "\nGoodbye!"
+           do putStrLn "Goodbye!"
               exitSuccess
 
 
