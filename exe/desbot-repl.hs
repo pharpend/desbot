@@ -28,16 +28,22 @@
 
 module Main where
 
-import Network.IRC.Desbot hiding (Parser)
+import qualified Data.Text.IO as T
+import Network.IRC.Desbot hiding (Manual, Parser)
 import Options.Applicative
+import Paths_desbot
 import System.Directory
 import System.IO
+import System.Pager
 
 main :: IO ()
 main =
   do args <- execParser desbotPI
      hSetBuffering stdout NoBuffering
      case args of
+       Manual -> getDataFileName "MANUAL.md" >>=
+                 T.readFile >>=
+                 printOrPage
        WithConfigFile fp ->
          do Config _ replconf _ <- makeAbsolute fp >>= 
                                    readConfigFile >>=
@@ -45,6 +51,7 @@ main =
             repl replconf
 
 data Args = WithConfigFile FilePath
+          | Manual
 
 desbotPI :: ParserInfo Args
 desbotPI =
@@ -59,4 +66,11 @@ desbotParser =
                       ,metavar "PATH"
                       ,value "desbot.yaml"
                       ,help "The path to the configuration file."
-                      ,showDefault]))
+                      ,showDefault])) <|>
+  (flag' Manual
+         (mconcat [long "manual"
+                  ,long "docs"
+                  ,long "documentation"
+                  ,short 'm'
+                  ,short 'd'
+                  ,help "Show desbot's manual."]))

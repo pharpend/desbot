@@ -16,9 +16,11 @@ build-type:          Simple
 cabal-version:       >=1.10
 extra-source-files:
   LICENSE
+  MANUAL.md
   README.md
   res/config-example.yaml
 data-files:
+  MANUAL.md
   res/config-example.yaml
 
 source-repository head
@@ -87,3 +89,5 @@ executable desbot-repl
     , desbot
     , directory
     , optparse-applicative
+    , pager >=0.1.1
+    , text
