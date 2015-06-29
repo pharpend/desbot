@@ -19,9 +19,11 @@ extra-source-files:
   MANUAL.md
   README.md
   res/config-example.yaml
+  res/config-default.yaml
 data-files:
   MANUAL.md
   res/config-example.yaml
+  res/config-default.yaml
 
 source-repository head
   type:                git

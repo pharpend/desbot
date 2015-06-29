@@ -69,8 +69,7 @@ main =
                          defaultConf <- B.readFile defaultConfPath
                          B.writeFile desbotYamlPath defaultConf
                          putStrLn "You may want to edit the configuration file, but you are not required to."
-              runExceptional =<<
-                readConfigFile (mappend dataDir desbotYamlPath)
+              runExceptional =<< readConfigFile desbotYamlPath
      case action' of
        Bot ->
          fail "You can't run the bot just yet"
