@@ -11,6 +11,10 @@ info:
 
 # Configuration for desbot-repl. This is optional, but it's listed here so you
 # can change the values.
+# 
+# desbot uses a library called Haskeline to read user input. You can customize
+# Haskeline with a ~/.haskeline file. See
+# <http://trac.haskell.org/haskeline/wiki/UserPrefs> for more information.
 repl:
   prompt: ">>= "
   # The name by which the bot addresses you when it has an error message.
