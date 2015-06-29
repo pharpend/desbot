@@ -66,7 +66,18 @@ Run the following commands:
 
     git clone git://github.com/pharpend/desbot.git
     stack setup
+
+If you are using this in a production-ish environment, use:
+
     stack install -j 5
+
+If you are developing Stack, use:
+
+    stack build -j 5
+
+If you used `stack build`, prefix all of the `desbot` commands below
+with `stack exec --`. So, `desbot --repl` becomes `stack exec -- desbot
+--repl`.
 
 #### Installing the old fashioned way
 
