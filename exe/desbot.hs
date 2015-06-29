@@ -30,7 +30,6 @@
 module Main where
 
 import Control.Applicative
-import Control.Monad.Trans.Reader
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as B8
 import qualified Data.Text as T
@@ -38,7 +37,6 @@ import qualified Data.Text.IO as T
 import Network.IRC.Desbot hiding (Manual, Parser)
 import Paths_desbot
 import Options.Applicative
-import Options.Applicative.Internal
 import System.Directory
 import System.Pager
 
@@ -47,7 +45,7 @@ main =
   do Args fp action' <- execParser desbotPI
      config <-
        case fp of
-         Just fp -> runExceptional =<< readConfigFile =<< makeAbsolute fp
+         Just x -> runExceptional =<< readConfigFile =<< makeAbsolute x
          Nothing ->
            do dataDir <-
                 makeAbsolute =<< getAppUserDataDirectory "desbot"

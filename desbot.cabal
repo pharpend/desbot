@@ -75,4 +75,3 @@ executable desbot
     , optparse-applicative
     , pager
     , text
-    , transformers
