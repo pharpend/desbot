@@ -1,40 +1,57 @@
 # -*- mode: yaml -*-
 # 
 # Desbot configuration file example
+
+# This isn't required, but if you're going to fork the bot, you probably want to
+# change these values:
+info:
+  source: "https://github.com/pharpend/desbot"
+  bugs: "https://github.com/pharpend/desbot/issues"
+  manual: "https://github.com/pharpend/desbot/tree/master/MANUAL.md"
+
+# Configuration for desbot-repl. This is optional, but it's listed here so you
+# can change the values.
+repl:
+  prompt: ">>= "
+  # The name by which the bot addresses you when it has an error message.
+  name: "luser"
+  
+# A list of servers to which the bot connects. Don't connect to too many
+# servers, because the bot creates a new thread for each server.
 # 
-# No SSL support yet.
+# This is the only required field. If you want to be really lean, you can just
+# have the list of servers at the top-level, leave everything else to be
+# inferred.
+servers:
+    # The only required fields are hostname and nick. The rest can be
+    # inferred. The rest are listed here so you know what they are.
+  - hostname: irc.freenode.net
+    nick: desbot-example
+    port: 6667
+    username: desbot-example
+    id: freenode
+    # It's highly recommended that you have a log in case the bot crashes. By
+    # default, the log is "/dev/null".
+    log-file: freenode.log
+    # This field technically isn't required, but it really should be. By default,
+    # desbot will not join any channels.
+    channels:
+      - "#snowdrift"
+      - "#test"
+    # Get password from stdin
+    # 
+    # * If you set password to "prompt" or "stdin", desbot will prompt you for it
+    #   when you start the bot.
+    # * If you set "password: null", or delete the password field, desbot will
+    #   assume the nick is unregistered, and therefore doesn't need a password.
+    # * Otherwise, the password is whatever you put in this field.
+    password: prompt
 
-# The only required fields are hostname and nick. The rest can be inferred. They
-# are listed here so you know what they are.
-- hostname: irc.freenode.net
-  nick: desbot-example
-  port: 6667
-  username: desbot-example
-  id: freenode
-
-  # It's highly recommended that you have a log in case the bot crashes. By
-  # default, the log is "/dev/null".
-  log-file: freenode.log
-
-  # This field technically isn't required, but it really should be. By default,
-  # desbot will not join any channels.
-  channels:
-    - "#snowdrift"
-    - "#test"
-
-  # Get password from stdin
-  # 
-  # * If you set password to "prompt" or "stdin", desbot will prompt you for it
-  #   when you start the bot.
-  # * If you set "password: null", or delete the password field, desbot will
-  #   assume the nick is unregistered, and therefore doesn't need a password.
-  # * Otherwise, the password is whatever you put in this field.
-  password: prompt
-
-- hostname: irc.oftc.net
-  nick: desbot-example
-  id: oftc
-  log-file: oftc.log
-  channels:
-    - "#git-annex"
-    - "#debian"
+    # Another example.
+  - hostname: irc.oftc.net
+    nick: desbot-example
+    id: oftc
+    log-file: oftc.log
+    channels:
+      - "#git-annex"
+      - "#debian"
