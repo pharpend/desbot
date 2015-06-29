@@ -104,36 +104,35 @@ I haven't tested this, but this is the usual formula:
 ### Running the bot
 
 At the moment, the actual bot is not functioning. However, you can test
-the parser with `desbot --repl`:
+the parser with `desbot repl`:
 
 ```
-Usage: desbot [-c|--config-file PATH] ([-e|--config-example] |
-              [-i|--interactive|--repl] | [-m|--man|--manual])
+Usage: desbot [-c|--config-file PATH] COMMAND
   A useless IRC bot. For a manual see
   <https://github.com/pharpend/desbot/blob/master/MANUAL.md>.
 
 Available options:
   -h,--help                Show this help text
-  -c,--config-file PATH    The path to the configuration
-                           file. (default: "desbot.yaml")
-  -e,--config-example      Show an example configuration file
-  -i,--interactive,--repl  Run a REPL to test commands to desbot.
-  -m,--man,--manual        Show desbot's manual.
-```
+  -c,--config-file PATH    The path to the configuration file.
 
-Note that if you give `desbot` no arguments, it will attempt to run the
-bot. At the moment, the bot part doesn't work, so you'll probably just
-get an error message.
+Available commands:
+  config-example           Show an example configuration file
+  repl                     Run a REPL to test commands to desbot.
+  manual                   Show desbot's manual.
+  run                      Run the actual bot
+```
 
 #### Generating a desbot.yaml
 
-Before you get started, you need to generate a configuration file with
-`desbot --config-example`. You will likely want to change the
-configuration.
+The first time you run it, desbot will automatically generate a file
+`~/.desbot/desbot.yaml` with a valid configuration. You can edit that
+file if you want. You can also write your own. If you want to specify an
+alternate configuration file, use `-c /path/to/other/file`.
 
-As of 28 June 2015, this is the output of the aforementioned command:
+The default configuration file just contains some fields filled out to
+their defaults, as well as a (commented out) extended example.
 
-```yaml
+```
 # -*- mode: yaml -*-
 # 
 # Desbot configuration file example
@@ -149,7 +148,6 @@ info:
 # can change the values.
 repl:
   prompt: ">>= "
-  # The name by which the bot addresses you when it has an error message.
   name: "luser"
   
 # A list of servers to which the bot connects. Don't connect to too many
@@ -158,54 +156,61 @@ repl:
 # This is the only required field. If you want to be really lean, you can just
 # have the list of servers at the top-level, leave everything else to be
 # inferred.
-servers:
-    # The only required fields are hostname and nick. The rest can be
-    # inferred. The rest are listed here so you know what they are.
-  - hostname: irc.freenode.net
-    nick: desbot-example
-    port: 6667
-    username: desbot-example
-    id: freenode
-    # It's highly recommended that you have a log in case the bot crashes. By
-    # default, the log is "/dev/null".
-    log-file: freenode.log
-    # This field technically isn't required, but it really should be. By default,
-    # desbot will not join any channels.
-    channels:
-      - "#snowdrift"
-      - "#test"
-    # Get password from stdin
-    # 
-    # * If you set password to "prompt" or "stdin", desbot will prompt you for it
-    #   when you start the bot.
-    # * If you set "password: null", or delete the password field, desbot will
-    #   assume the nick is unregistered, and therefore doesn't need a password.
-    # * Otherwise, the password is whatever you put in this field.
-    password: prompt
+# 
+# We'll just leave it empty for now:
+servers: []
 
-    # Another example.
-  - hostname: irc.oftc.net
-    nick: desbot-example
-    id: oftc
-    log-file: oftc.log
-    channels:
-      - "#git-annex"
-      - "#debian"
+
+# A full example:
+#
+# servers:
+#     # The only required fields are hostname and nick. The rest can be
+#     # inferred. The rest are listed here so you know what they are.
+#   - hostname: irc.freenode.net
+#     nick: desbot-example
+#     port: 6667
+#     username: desbot-example
+#     id: freenode
+#     # It's highly recommended that you have a log in case the bot crashes. By
+#     # default, the log is "/dev/null".
+#     log-file: freenode.log
+#     # This field technically isn't required, but it really should be. By default,
+#     # desbot will not join any channels.
+#     channels:
+#       - "#snowdrift"
+#       - "#test"
+#     # Get password from stdin
+#     # 
+#     # * If you set password to "prompt" or "stdin", desbot will prompt you for it
+#     #   when you start the bot.
+#     # * If you set "password: null", or delete the password field, desbot will
+#     #   assume the nick is unregistered, and therefore doesn't need a password.
+#     # * Otherwise, the password is whatever you put in this field.
+#     password: prompt
+
+#     # Another example.
+#   - hostname: irc.oftc.net
+#     nick: desbot-example
+#     id: oftc
+#     log-file: oftc.log
+#     channels:
+#       - "#git-annex"
+#       - "#debian"
 ```
 
-A minimal configuration is:
+Most of the fields are not required, as the comments in the file
+explain.
+
+A minimal configuration file would be:
 
 ```yaml
-- hostname: irc.freenode.net
-  nick: desbot-example
+servers:
+  - hostname: irc.freenode.net
+    nick: desbot-example
 ```
 
 The rest of the values can be inferred. The comments do a pretty good
 job of explaining what each field does, so I'll leave you to read those.
-
-By default, `desbot` will try to read `desbot.yaml` in the current
-directory. You can specify an alternate file with `-c
-/path/to/other/yaml/file`.
 
 ### Using the desbot REPL
 
