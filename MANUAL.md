@@ -60,6 +60,19 @@ Linux system will probably work.
 It is strongly recommended that you use [Stack][1] to build this
 package. [Git][2] is also required.
 
+You must have `libtinfo.so` somewhere in `/lib`, `/usr/lib`, or wherever
+your system keeps shared object files.
+
+On my system:
+
+    $ locate libtinfo.so
+    /usr/lib/libtinfo.so
+    /usr/lib/libtinfo.so.5
+
+* If you are on Debian or Ubuntu, and you only see the `libtinfo.so.5`
+  or `libtinfo.so.<number>`, install `libtinfo-dev` through your
+  system's package manager.
+
 #### Installing with Stack
 
 Run the following commands:
