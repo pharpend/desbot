@@ -65,6 +65,7 @@ package. [Git][2] is also required.
 Run the following commands:
 
     git clone git://github.com/pharpend/desbot.git
+    cd desbot/
     stack setup
 
 If you are using this in a production-ish environment, use:
