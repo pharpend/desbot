@@ -39,7 +39,9 @@ main =
      hSetBuffering stdout NoBuffering
      case args of
        WithConfigFile fp ->
-         do Config replconf _ <- makeAbsolute fp >>= readConfigFile >>= runExceptional
+         do Config _ replconf _ <- makeAbsolute fp >>= 
+                                   readConfigFile >>=
+                                   runExceptional
             repl replconf
 
 data Args = WithConfigFile FilePath

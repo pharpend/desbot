@@ -35,16 +35,18 @@
 module Network.IRC.Desbot.Parser where
 
 import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as B8
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import Text.Parsec
 
 -- |Parse a 'String' into an 'IRC'. This is primarily for usage with
 -- "Network.IRC.Desbot.REPL".
 parseIRC :: ByteString       -- ^Input
-         -> String           -- ^Nick of the responding bot
-         -> SourceName       -- ^The source name
+         -> BotState
          -> Either ParseError IRC
-parseIRC input nick src =
-  runParser ircParser (BotState nick) src input 
+parseIRC input bs =
+  runParser ircParser bs "luser-input" input 
 
 -- |Parse an IRC message
 ircParser :: Parser IRC
@@ -57,7 +59,25 @@ type Parser = Parsec ByteString BotState
 
 -- |The state of the bot. This just contains extra information like the
 -- bot's nick.
-data BotState = BotState {botNick :: String}
+data BotState = BotState {botNick :: String
+                         ,botSource :: String
+                         ,botBugs :: String
+                         ,botManual :: String}
+   deriving (Eq, Show)
+
+-- |Default bot state
+-- 
+-- > nullBotState =
+-- >   BotState "desbot"
+-- >            "https://github.com/pharpend/desbot"
+-- >            "https://github.com/pharpend/desbot/issues"
+-- >            "https://github.com/pharpend/desbot/tree/master/MANUAL.md"
+nullBotState :: BotState
+nullBotState =
+  BotState "desbot"
+           "https://github.com/pharpend/desbot"
+           "https://github.com/pharpend/desbot/issues"
+           "https://github.com/pharpend/desbot/tree/master/MANUAL.md"
 
 -- |An IRC command according to RFC 2812.
 --
@@ -150,7 +170,8 @@ nickParser = do firstChar <- oneOf allowedFirstChars
 -- |Parse a command posted in a channel
 chanCommandParser :: Parser (Maybe AtWhom, Command)
 chanCommandParser =
-  do (BotState ourNick) <- getState
+  do bs <- getState
+     let ourNick = botNick bs
      atWhom <-
        do nick <-
             optionMaybe $
@@ -169,28 +190,38 @@ chanCommandParser =
 
 -- |Parse a command sent in a private message
 parsePrivateCommand :: ByteString -- ^Input
-                    -> String     -- ^Nick of the responding bot
-                    -> SourceName -- ^Name of the source (this is a 'String').
+                    -> BotState
                     -> Either ParseError Command
-parsePrivateCommand bs nick src =
-  runParser privateCommandParser (BotState nick) src bs
+parsePrivateCommand input bs =
+  runParser privateCommandParser bs "luser-input" input
 
 -- |Parse a command sent in a private message. Commands in private
 -- messages don't need the '~' as a prefix, but it's not verboten.
 privateCommandParser :: Parser Command
 privateCommandParser =
-  do try $ do nickParser
-              oneOf ":,"
-     try $ many1 space
-     try $ char '~'
+  do optry $ do nickParser
+                oneOf ":,"
+     optry $ many1 space
+     optry $ char '~'
      commandParser
+  where optry = optional . try
+
+-- |Take a 'Command', send back a 'ByteString'
+runCommand :: BotState -> Command -> ByteString
+runCommand _ Help =
+  T.encodeUtf8
+    (T.intercalate
+       "\r\n"
+       ["I am desbot, the channel bot and dictator."
+       ,"My full manual can be found with `~manual`."])
+runCommand bs Source = B8.pack (botSource bs)
 
 -- |Parse a 'Command'
 commandParser :: Parser Command
 commandParser =
   helpParser <|>
   sourceParser <?>
-  "Command parser"
+  "Parsing of ~command"
 
 -- |Parse the 'Help' command.
 --
@@ -207,3 +238,4 @@ sourceParser :: Parser Command
 sourceParser =
   do string "source" <|> string "src"
      return Source
+

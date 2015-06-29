@@ -31,8 +31,10 @@
 
 module Network.IRC.Desbot.Config where
 
+import Network.IRC.Desbot.Parser
 import Network.IRC.Desbot.REPL
 
+import Control.Applicative (Alternative(..))
 import Control.Exceptional
 import Control.Monad (mzero)
 import Data.String (IsString(..))
@@ -44,15 +46,44 @@ import System.Directory (makeAbsolute)
 
 -- |The configuration when running desbot, or desbot's REPL
 data Config =
-  Config {configREPL :: REPLConf
+  Config {configBot :: BotConf
+         ,configRepl :: REPLConf
          ,configServers :: [Server]}
   deriving (Eq,Show)
 
 instance FromJSON Config where
   parseJSON (Array v) =
-    Config <$> pure nullREPLConf <*> parseJSON (Array v)
-  parseJSON (Object v) = Config <$> v .:? "repl" .!= nullREPLConf <*>
-                         v .: "servers"
+    Config <$> pure nullBotConf
+           <*> pure nullREPLConf 
+           <*> parseJSON (Array v)
+  parseJSON (Object v) = 
+    Config <$> (v .:? "extra" <|> v .:? "info") .!= nullBotConf 
+           <*> v .:? "repl" .!= nullREPLConf 
+           <*> v .: "servers"
+  parseJSON _ = mzero
+
+-- |Information about the bot in general
+data BotConf =
+  BotConf {bcSourceUrl :: Text
+          ,bcBugsUrl :: Text
+          ,bcManualUrl :: Text}
+  deriving (Eq,Show)
+
+-- |The default 'BotConf'
+nullBotConf :: BotConf
+nullBotConf =
+  BotConf (T.pack $ botSource nullBotState)
+          (T.pack $ botBugs nullBotState)
+          (T.pack $ botManual nullBotState)
+
+instance FromJSON BotConf where
+  parseJSON (Object v) =
+    BotConf <$> (v .:? "source" <|> 
+                 v .:? "source-url") .!= bcSourceUrl nullBotConf
+            <*> (v .:? "bugs" <|> 
+                 v .:? "bugs-url") .!= bcBugsUrl nullBotConf
+            <*> (v .:? "manual" <|> 
+                 v .:? "manual-url") .!= bcManualUrl nullBotConf
   parseJSON _ = mzero
 
 -- |Information on connecting to a server

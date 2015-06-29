@@ -43,14 +43,20 @@ module Network.IRC.Desbot
   , Config(..)
   , Server(..)
   , Password(..)
+  , BotConf(..)
+  , nullBotConf
   , readConfig
   , readConfigFile
-    -- * Running the server
-  -- , runServer
+    -- * The REPL
+  , repl
+  , REPLConf(..)
+  , nullREPLConf
     -- * Parsing IRC Messages
   , ircParser
+  , parseIRC
   , Parser
   , BotState(..)
+  , nullBotState
   , IRC(..)
   , Command(..)
   , AtWhom
@@ -63,14 +69,13 @@ module Network.IRC.Desbot
   , nickParser
   , chanParser
   , chanCommandParser
+    -- **** NB: There is no @parseCommand@, because parsing a 'Command' requires a context.
+  , parsePrivateCommand
   , privateCommandParser
   , commandParser
+  , runCommand
   , helpParser
   , sourceParser
-    -- * The REPL
-  , repl
-  , REPLConf(..)
-  , nullREPLConf
   )
   where
 

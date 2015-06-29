@@ -49,8 +49,7 @@ repl conf =
        \case
          Just line ->
            do case parsePrivateCommand (BO.pack line)
-                                       "desbot-repl"
-                                       "luser-input" of
+                                       nullBotState of
                 Left err ->
                   do print err
                      addHistory line
