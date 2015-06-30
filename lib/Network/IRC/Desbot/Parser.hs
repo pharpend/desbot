@@ -34,11 +34,26 @@
 
 module Network.IRC.Desbot.Parser where
 
+import Control.Monad.State.Lazy
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as B8
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Text.Parsec
+
+-- |This takes a 'ByteString', the input from the server, and returns a
+-- state transformer that eventually returns another 'ByteString' to
+-- send back to the server.
+ircFunction :: ByteString 
+            -> StateT BotState IO ByteString
+ircFunction bytes =
+  StateT $
+  \botstate ->
+    case parseIRC bytes botstate of
+      Left pe ->
+        return (B8.pack (show pe), botstate)
+      Right irc ->
+        return (runIRC botstate irc,botstate)
 
 -- |Parse a 'String' into an 'IRC'. This is primarily for usage with
 -- "Network.IRC.Desbot.REPL".
@@ -47,6 +62,25 @@ parseIRC :: ByteString       -- ^Input
          -> Either ParseError IRC
 parseIRC input bs =
   runParser ircParser bs "luser-input" input 
+  
+-- |Convert an 'IRC' into a 'ByteString' to send back to the channel.
+runIRC :: BotState -> IRC -> ByteString
+runIRC bs (ChanMsg chan atwhom cmd) =
+  mconcat ["PRIVMSG "
+          ,B8.pack chan
+          ," :"
+          ,case atwhom of
+             Nothing -> mempty
+             Just nom -> mappend (B8.pack nom) ": "
+          ,runCommand bs cmd]
+runIRC bs (PrivMsg fromWhom cmd) =
+  mconcat ["PRIVMSG "
+          ,B8.pack fromWhom
+          ," :"
+          ,runCommand bs cmd]
+runIRC _ (Ping str) =
+  mconcat ["PONG "
+          ,B8.pack str]
 
 -- |Parse an IRC message
 ircParser :: Parser IRC
@@ -59,6 +93,9 @@ type Parser = Parsec ByteString BotState
 
 -- |The state of the bot. This just contains extra information like the
 -- bot's nick.
+-- 
+-- This is for the parser, but it interacts closely with the
+-- configuration portion, so it's in the configuration module.
 data BotState = BotState {botNick :: String
                          ,botSource :: String
                          ,botBugs :: String

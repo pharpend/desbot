@@ -47,6 +47,7 @@ library
     , directory
     , exceptional >=0.1.5
     , haskeline
+    , mtl
     , network
     , parsec
     , text
@@ -54,6 +55,7 @@ library
     , yaml
   exposed-modules:
     Network.IRC.Desbot
+    Network.IRC.Desbot.Bot
     Network.IRC.Desbot.Config
     Network.IRC.Desbot.Parser
     Network.IRC.Desbot.REPL

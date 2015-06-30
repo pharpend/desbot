@@ -176,13 +176,13 @@ instance FromJSON Server where
   
 -- |A transitive type for a nick in a 'Server'. 
 data ServerNick = Defer
-                | PreferThese [Text]
+                | Prefer [Text]
   deriving (Eq, Show)
 
 instance FromJSON ServerNick where
   parseJSON (Array l)
     | V.null l = pure Defer
-    | otherwise = fmap (PreferThese . V.toList) (traverse parseJSON l)
+    | otherwise = fmap (Prefer . V.toList) (traverse parseJSON l)
   parseJSON (String "") = pure Defer
   parseJSON Null = pure Defer
   parseJSON _ = mzero
