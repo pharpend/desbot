@@ -75,7 +75,8 @@ main =
          getDataFileName "res/config-default.yaml" >>= makeAbsolute >>=
          B.readFile >>=
          B8.putStr
-       REPL -> repl (configREPL config)
+       DebugConfig -> print config
+       REPL -> repl config
        Manual ->
          getDataFileName "MANUAL.md" >>= T.readFile >>= printOrPage
 
@@ -84,6 +85,7 @@ data Args = Args (Maybe FilePath) Action
 data Action
   = REPL
   | ConfigExample
+  | DebugConfig
   | Manual
   | Bot
 
@@ -105,6 +107,9 @@ actionParser =
                    (info (pure ConfigExample)
                          (mconcat [fullDesc
                                   ,progDesc "Show an example configuration file"]))
+          ,command "debug-config"
+                   (info (pure DebugConfig)
+                         (mconcat [fullDesc,progDesc "Decode an optionally specified configuration file, and print out the Haskell value."]))
           ,command "repl"
                    (info (pure REPL)
                          (mconcat [fullDesc

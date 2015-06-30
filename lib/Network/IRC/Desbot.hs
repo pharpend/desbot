@@ -40,20 +40,29 @@ module Network.IRC.Desbot
   ( -- ** Convenience re-exports
     module Control.Exceptional
     -- * Configuration
+    -- ** Porcelain functions
+  , readConfig
+  , readConfigFile
+    -- ** Types
   , Config(..)
   , Server(..)
+  , ServerNick(..)
   , Password(..)
   , BotConf(..)
   , nullBotConf
-  , readConfig
-  , readConfigFile
-    -- * The REPL
-  , repl
   , REPLConf(..)
   , nullREPLConf
+    -- * The REPL
+  , repl
     -- * Parsing IRC Messages
-  , ircParser
+    -- ** Porcelain functions
+  , runPrivateCommand
+  , parsePrivateCommand
+  -- TODO:
+  -- , runIRC
   , parseIRC
+  , fromBotConf
+    -- ** Types
   , Parser
   , BotState(..)
   , nullBotState
@@ -62,17 +71,16 @@ module Network.IRC.Desbot
   , AtWhom
   , FromWhom
   , Channel
+  , NickOrChan(..)
+  -- ** Internal functions
+  , ircParser
   , pingParser
   , privmsgParser
-  , NickOrChan(..)
+  , privateCommandParser
   , nickOrChanParser
   , nickParser
   , chanParser
   , chanCommandParser
-    -- **** NB: There is no @parseCommand@, because parsing a 'Command' requires a context.
-  , runPrivateCommand
-  , parsePrivateCommand
-  , privateCommandParser
   , commandParser
   , runCommand
   , bugsParser

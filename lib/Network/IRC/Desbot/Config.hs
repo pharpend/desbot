@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- desbot - bot for #snowdrift on FreeNode
@@ -31,18 +32,31 @@
 
 module Network.IRC.Desbot.Config where
 
-import Network.IRC.Desbot.Parser
-import Network.IRC.Desbot.REPL
+import Network.IRC.Desbot.Parser hiding (Parser)
 
 import Control.Applicative (Alternative(..))
 import Control.Exceptional
-import Control.Monad (mzero)
+import Control.Monad (ap, mzero)
 import Data.String (IsString(..))
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Vector as V
 import Data.Yaml
 import Network (HostName)
 import System.Directory (makeAbsolute)
+
+-- |Take a 'BotConf' and turn it into a 'BotState'. The only exception
+-- this might throw is if 'bcNicks' returns '[]'.
+fromBotConf :: BotConf -> Exceptional BotState
+fromBotConf cfg =
+  do nick <- case bcNicks cfg of
+              [] -> fail "Nicks list mustn't be empty!"
+              (x:_) -> pure x
+     return (BotState {botNick = T.unpack nick
+                      ,botSource = T.unpack (bcSourceUrl cfg)
+                      ,botBugs = T.unpack (bcBugsUrl cfg)
+                      ,botManual = T.unpack (bcManualUrl cfg)
+                      ,botPrefix = T.unpack (bcPrefix cfg)})
 
 -- |The configuration when running desbot, or desbot's REPL
 data Config =
@@ -53,43 +67,89 @@ data Config =
 
 instance FromJSON Config where
   parseJSON (Array v) =
-    Config <$> pure nullBotConf
-           <*> pure nullREPLConf 
-           <*> parseJSON (Array v)
-  parseJSON (Object v) = 
-    Config <$> (v .:? "extra" <|> v .:? "info") .!= nullBotConf 
-           <*> v .:? "repl" .!= nullREPLConf 
-           <*> v .: "servers"
+    Config <$> pure nullBotConf <*> pure nullREPLConf <*> parseJSON (Array v)
+  parseJSON (Object v) =
+    Config <$>
+    (Just <$> (v .: "extra" <|> v .: "info") <|> pure Nothing) .!= nullBotConf <*>
+    v .:? "repl" .!= nullREPLConf <*>
+    v .: "servers"
   parseJSON _ = mzero
 
 -- |Information about the bot in general
 data BotConf =
-  BotConf {bcSourceUrl :: Text
+  BotConf {bcNicks :: [Text]
+          ,bcSourceUrl :: Text
           ,bcBugsUrl :: Text
-          ,bcManualUrl :: Text}
+          ,bcManualUrl :: Text
+          ,bcPrefix :: Text}
   deriving (Eq,Show)
 
 -- |The default 'BotConf'
 nullBotConf :: BotConf
 nullBotConf =
-  BotConf (T.pack $ botSource nullBotState)
+  BotConf [T.pack $ botNick nullBotState]
+          (T.pack $ botSource nullBotState)
           (T.pack $ botBugs nullBotState)
           (T.pack $ botManual nullBotState)
+          (T.pack $ botPrefix nullBotState)
 
 instance FromJSON BotConf where
   parseJSON (Object v) =
-    BotConf <$> (v .:? "source" <|> 
-                 v .:? "source-url") .!= bcSourceUrl nullBotConf
-            <*> (v .:? "bugs" <|> 
-                 v .:? "bugs-url") .!= bcBugsUrl nullBotConf
-            <*> (v .:? "manual" <|> 
-                 v .:? "manual-url") .!= bcManualUrl nullBotConf
+    BotConf <$>
+    withDefault
+      (bcNicks nullBotConf)
+      [fmap Just
+            (alt [fmap (\x -> [x])
+                       (attrOf v "nick")
+                 ,attrOf v "nicks" >>=
+                  \case
+                    [] ->
+                      fail "Nicks list may not be empty"
+                    x -> return x])
+      ,pure Nothing] <*>
+    withDefault
+      (bcSourceUrl nullBotConf)
+      [fmap Just $ alt [attrOf v "source",attrOf v "source-url"],pure Nothing] <*>
+    withDefault
+      (bcBugsUrl nullBotConf)
+      [fmap Just $ alt [attrOf v "bugs",attrOf v "bugs-url"],pure Nothing] <*>
+    withDefault
+      (bcManualUrl nullBotConf)
+      [fmap Just $ alt [attrOf v "manual",attrOf v "manual-url"],pure Nothing] <*>
+    withDefault
+      (bcPrefix nullBotConf)
+      [fmap Just $ alt [attrOf v "prefix",attrOf v "command-prefix"]
+      ,pure Nothing]
+    where alt [] = empty
+          alt (x:xs) = x <|> alt xs
+          withDefault x y = alt y .!= x
+          attrOf :: FromJSON a
+                 => Object -> Text -> Parser a
+          attrOf = (.:)
+  parseJSON Null = pure nullBotConf
   parseJSON _ = mzero
+
+-- |REPL configuration
+data REPLConf = REPLConf {replPrompt :: String
+                         ,replName :: String}
+  deriving (Eq, Show)
+
+instance FromJSON REPLConf where
+  parseJSON (Object v) =
+    REPLConf <$> (v .:? "prompt" .!= ">>= ") <*> (v .:? "name" .!= "luser")
+  parseJSON Null = pure nullREPLConf
+  parseJSON _ = mzero
+
+-- |Default REPL configuration
+-- 
+-- > nullREPLConf = REPLConf ">>= " "luser"
+nullREPLConf :: REPLConf
+nullREPLConf = REPLConf ">>= " "luser"
 
 -- |Information on connecting to a server
 data Server =
-  Server {srvNick :: Text
-         ,srvUsername :: Text
+  Server {srvNick :: ServerNick
+         ,srvUsername :: Either ServerNick Text
          ,srvPassword :: Password
          ,srvChannels :: [Text]
          ,srvId :: Text         -- ^This is an identifier used in
@@ -104,16 +164,30 @@ instance FromJSON Server where
   parseJSON (Object v) =
     do nick <- v .: "nick"
        hostname <- v .: "hostname"
-       Server nick <$>
-         v .:? "username" .!= nick <*>
-         v .:? "password" .!= NoPassword <*>
-         v .:? "channels" .!= [] <*>
-         v .:? "id" .!= (T.pack hostname) <*>
-         pure hostname <*>
-         v .:? "port" .!= 6667 <*>
-         v .:? "log-file" .!= "/dev/null"
+       Server nick `fmap`
+         ((Right `fmap` (v .: "username")) <|> (pure (Left nick))) `ap`
+         ((v .:? "password") .!= NoPassword) `ap`
+         ((v .:? "channels") .!= []) `ap`
+         ((v .:? "id") .!= (T.pack hostname)) `ap`
+         (pure hostname) `ap`
+         ((v .:? "port") .!= 6667) `ap`
+         ((v .:? "log-file") .!= "/dev/null")
+  parseJSON _ = mzero
+  
+-- |A transitive type for a nick in a 'Server'. 
+data ServerNick = Defer
+                | PreferThese [Text]
+  deriving (Eq, Show)
+
+instance FromJSON ServerNick where
+  parseJSON (Array l)
+    | V.null l = pure Defer
+    | otherwise = fmap (PreferThese . V.toList) (traverse parseJSON l)
+  parseJSON (String "") = pure Defer
+  parseJSON Null = pure Defer
   parseJSON _ = mzero
 
+--
 -- |A password can either be demanded from stdin, omitted, or added via
 -- 'NickServPassword'. Note that this is an instance of 'IsString', so
 -- you can turn on @OverloadedStrings@, and enter plain strings instead

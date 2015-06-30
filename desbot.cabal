@@ -50,6 +50,7 @@ library
     , network
     , parsec
     , text
+    , vector
     , yaml
   exposed-modules:
     Network.IRC.Desbot

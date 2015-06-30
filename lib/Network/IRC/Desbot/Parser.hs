@@ -62,7 +62,8 @@ type Parser = Parsec ByteString BotState
 data BotState = BotState {botNick :: String
                          ,botSource :: String
                          ,botBugs :: String
-                         ,botManual :: String}
+                         ,botManual :: String
+                         ,botPrefix :: String}
    deriving (Eq, Show)
 
 -- |Default bot state
@@ -72,12 +73,14 @@ data BotState = BotState {botNick :: String
 -- >            "https://github.com/pharpend/desbot"
 -- >            "https://github.com/pharpend/desbot/issues"
 -- >            "https://github.com/pharpend/desbot/tree/master/MANUAL.md"
+-- >            "~"
 nullBotState :: BotState
 nullBotState =
   BotState "desbot"
            "https://github.com/pharpend/desbot"
            "https://github.com/pharpend/desbot/issues"
            "https://github.com/pharpend/desbot/tree/master/MANUAL.md"
+           "~"
 
 -- |An IRC command according to RFC 2812.
 --
@@ -101,6 +104,7 @@ data Command = Bugs
              | Help
              | License
              | Manual
+             | Prefix
              | Source
   deriving (Eq, Show)
 
@@ -187,7 +191,7 @@ chanCommandParser =
             Just n
               | n == ourNick -> pure Nothing
               | otherwise -> pure (Just n)
-     char '~'
+     string (botPrefix bs)
      cmd <- commandParser
      return (atWhom,cmd)
 
@@ -213,10 +217,11 @@ parsePrivateCommand input bs =
 -- messages don't need the '~' as a prefix, but it's not verboten.
 privateCommandParser :: Parser Command
 privateCommandParser =
-  label (do optry $ do nickParser
+  label (do bs <- getState
+            optry $ do nickParser
                        oneOf ":,"
             optry $ many1 space
-            optry $ char '~'
+            optry $ string (botPrefix bs)
             commandParser)
         "a command."
   where optry = optional . try
@@ -224,13 +229,16 @@ privateCommandParser =
 -- |Take a 'Command', send back a 'ByteString'
 runCommand :: BotState -> Command -> ByteString
 runCommand bs Bugs = B8.pack (botBugs bs)
-runCommand _ Help =
+runCommand bs Help =
   T.encodeUtf8
     (T.intercalate
        "\r\n"
        ["I am desbot, the channel bot and dictator."
-       ,"My full manual can be found with `~manual`."])
+       ,mconcat ["My full manual can be found with `"
+                ,T.pack (botPrefix bs)
+                ,"manual`."]])
 runCommand _ License = "https://gnu.org/licenses/agpl"
+runCommand bs Prefix = B8.pack (botPrefix bs)
 runCommand bs Manual = B8.pack (botManual bs)
 runCommand bs Source = B8.pack (botSource bs)
 
@@ -241,6 +249,7 @@ commandParser =
   <|> helpParser 
   <|> licenseParser
   <|> manualParser 
+  <|> prefixParser 
   <|> sourceParser 
   <?> "Parsing of your command"
 
@@ -275,6 +284,14 @@ manualParser :: Parser Command
 manualParser =
   do trystr "manual" <|> trystr "man"
      return Manual
+
+-- |Parse the 'Prefix' command.
+--
+-- This succeeds on @~prefix@
+prefixParser :: Parser Command
+prefixParser =
+  do trystr "prefix"
+     return Prefix
 
 -- |Parse the 'Source' command.
 --

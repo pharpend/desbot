@@ -8,6 +8,7 @@ info:
   source: "https://github.com/pharpend/desbot"
   bugs: "https://github.com/pharpend/desbot/issues"
   manual: "https://github.com/pharpend/desbot/tree/master/MANUAL.md"
+  prefix: "~"
 
 # Configuration for desbot-repl. This is optional, but it's listed here so you
 # can change the values.

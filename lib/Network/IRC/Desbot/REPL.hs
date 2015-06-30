@@ -33,23 +33,25 @@
 
 module Network.IRC.Desbot.REPL where
 
+import Network.IRC.Desbot.Config
 import Network.IRC.Desbot.Parser
 
-import Control.Monad
+import Control.Exceptional
 import qualified Data.ByteString.Char8 as BO
-import Data.Yaml
 import System.Console.Haskeline
 import System.Exit
 
--- |Run the repl. This only works on POSIX.
-repl :: REPLConf -> IO ()
+-- |Run the REPL.
+repl :: Config -> IO ()
 repl conf =
-  do let prompt = replPrompt conf
+  do let prompt = replPrompt (configREPL conf)
+     botState <-
+       runExceptional (fromBotConf (configBot conf))
      runInputT defaultSettings (getInputLine prompt) >>=
        \case
          Just line ->
            do case runPrivateCommand (BO.pack line)
-                                     nullBotState of
+                                     botState of
                 Left err ->
                   do putStrLn "Error in parsing command line:"
                      print err
@@ -60,20 +62,3 @@ repl conf =
          Nothing ->
            do putStrLn "Goodbye!"
               exitSuccess
-
-
--- |REPL configuration
-data REPLConf = REPLConf {replPrompt :: String
-                         ,replName :: String}
-  deriving (Eq, Show)
-
-instance FromJSON REPLConf where
-  parseJSON (Object v)  = REPLConf <$> v .:? "prompt" .!= ">>= "
-                                   <*> v .:? "name" .!= "luser"
-  parseJSON _ = mzero
-
--- |Default REPL configuration
--- 
--- > nullREPLConf = REPLConf ">>= " "luser"
-nullREPLConf :: REPLConf
-nullREPLConf = REPLConf ">>= " "luser"
