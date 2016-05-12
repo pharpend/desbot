@@ -52,7 +52,8 @@ connect'' cfg =
      let instanceCfg = defaultIRCConf (cfg ^. nick)
          instanceCfg' =
            instanceCfg { _channels = cfg ^. autojoin
-                       , _ctcpVer = mappend "desbot, " versionTxt
+                       , _ctcpVer = mappend "desbot <https://github.com/pharpend/desbot>, "
+                                            versionTxt
                        , _eventHandlers = mappend [echoH cfg]
                                                   (_eventHandlers instanceCfg)
                        }
