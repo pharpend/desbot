@@ -1,11 +1,11 @@
-- dcHost: irc.freenode.net
-  dcPort: 6697
-  dcTLS: true
-  dcLogFile: log/freenode.log
-  dcAutojoin:
-    - "#snowdrift"
-    - "#lysa"
-    - "#learnprogramming"
-    - "#lpmc"
-  dcNick: desbot-example
-  dcPass: desbot-example
+dcHost: irc.freenode.net
+dcPort: 6697
+dcTls: true
+dcLogFile: log/freenode.log
+dcAutojoin:
+  - "#snowdrift"
+  - "#lysa"
+  - "#learnprogramming"
+  - "#lpmc"
+dcNick: desbot-example
+dcPass: desbot-example

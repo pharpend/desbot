@@ -1,0 +1,7 @@
+resolver: lts-5.16
+
+packages:
+  - '.'
+
+extra-deps:
+  - aeson-0.11.2.0
