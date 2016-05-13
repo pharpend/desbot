@@ -74,26 +74,44 @@ evalHandler cfg =
       -- The source has to be a user
       case _source e of
         User s ->
-          -- It has to be a PRIVMSG to the bot
           case _message e of
             Privmsg tgt (Right msg)
-              | tgt == cfg ^. nick -> mapM_ send (evald s msg)
+              -- Private message to the bot
+              | tgt == cfg ^. nick -> mapM_ send (evald s Nothing msg)
+              | otherwise -> return ()
+            _ -> return ()
+        Channel s nck ->
+          case _message e of
+            Privmsg tgt (Right msg)
+              -- Message to a channel targeting the bot
+              | or $ map (startsWith msg . mappend (cfg ^. nick)) [": ", ", "] ->
+                  -- the nick plus ", " or ": "
+                  let dbl = T.length (cfg ^. nick) + 2
+                  in mapM_ send (evald s (Just nck) (T.drop dbl msg))
               | otherwise -> return ()
             _ -> return ()
         _ -> return ()
+    x `startsWith` y = T.take (T.length y) x == y
 
 -- |Thing that evaluates
---
--- Alright, fuck it, we're using unsafePerformIO
-evald :: Text -> Text -> [Message Text]
-evald tgt x =
+-- 
+-- Uses 'unsafePerformIO'
+evald :: Text           -- ^Source
+      -> Maybe Text     -- ^Person to target
+      -> Text           -- ^Message
+      -> [Message Text] -- ^Resulting messages. If there are multiple
+                        -- lines in the result, they are represented as
+                        -- separate messages.
+evald src tgt x =
   unsafePerformIO $
     do result <-
          runInterpreter $
            do setImports ["Prelude"]
               res <- eval unpacked
               return (T.pack res)
-       return $ either show' (pure . Privmsg tgt . Right) result
+       return $ either show'
+                       (pure . Privmsg src . Right . applyTarget tgt)
+                       result
   where
     unpacked = T.unpack x
     show' =
@@ -108,5 +126,9 @@ evald tgt x =
                 errs
         NotAllowed s -> [pmtr s]
         GhcException s -> [pmtr s]
-    pmtr s = Privmsg tgt (Right (T.pack s))
+    pmtr = Privmsg src . Right . applyTarget tgt . T.pack
     errMsg' = lines . errMsg
+    applyTarget tgt msg =
+      case tgt of
+        Nothing -> msg
+        Just x -> mconcat [x, ": ", msg]
