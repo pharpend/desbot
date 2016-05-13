@@ -4,5 +4,6 @@ import Desbot
 
 main :: IO ()
 main =
-  do c <- readConfig
+  do c <- readPrivateConf
      connect'' c
+     

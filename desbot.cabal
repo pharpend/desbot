@@ -29,6 +29,7 @@ library
     FlexibleInstances
     FunctionalDependencies
     MultiParamTypeClasses
+    LambdaCase
     OverloadedStrings
     TemplateHaskell
   other-modules:
@@ -36,6 +37,7 @@ library
   build-depends:
       base ==4.8.*
     , aeson >=0.10.0.0
+    , hint
     , irc-client
     , lens
     , optparse-simple
