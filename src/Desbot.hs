@@ -8,11 +8,11 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import           Data.Yaml
 import           GHC.Generics
-import           Language.Haskell.Interpreter
 import           Network.IRC.Client
 import           Options.Applicative.Simple (simpleVersion)
 import qualified Paths_desbot as P
 import           System.IO.Unsafe
+import           System.Process
 
 data PrivateConf = PrivateConf { pcHost :: Text
                                , pcPort :: Int
@@ -104,31 +104,19 @@ evald :: Text           -- ^Source
                         -- separate messages.
 evald src tgt x =
   unsafePerformIO $
-    do result <-
-         runInterpreter $
-           do setImports ["Prelude"]
-              res <- eval unpacked
-              return (T.pack res)
-       return $ either show'
-                       (pure . Privmsg src . Right . applyTarget tgt)
-                       result
+    do result <- readProcess "mueval" ["-e", unpacked] mempty
+       let -- Split into lines, ellipsize each line
+           res = map (lineup . T.strip) $ T.lines $ T.pack result
+           -- Ellipsize if there are more than 3 lines
+           res' | 3 < length res = mappend res ["..."]
+                | otherwise = res
+       return $ map (Privmsg src . Right . applyTarget tgt) res'
   where
+    -- Ellipsize if it's more than 64 characters
+    lineup line | 64 > T.length line = line
+                | otherwise = mappend (T.take 64 line) "..."
     unpacked = T.unpack x
-    show' =
-      \case
-        UnknownError s -> [pmtr s]
-        WontCompile errs ->
-          mconcat $
-            map (\s -> let s' = map pmtr (errMsg' s)
-                       in if length s' <= 3
-                            then s'
-                            else take 2 s' ++ [pmtr "..."])
-                errs
-        NotAllowed s -> [pmtr s]
-        GhcException s -> [pmtr s]
     pmtr = Privmsg src . Right . applyTarget tgt . T.pack
-    errMsg' = lines . errMsg
-    applyTarget tgt msg =
-      case tgt of
-        Nothing -> msg
-        Just x -> mconcat [x, ": ", msg]
+    applyTarget tgt msg = case tgt of
+                            Nothing -> msg
+                            Just x -> mconcat [x, ": ", msg]

@@ -40,8 +40,10 @@ library
     , aeson >=0.10.0.0
     , hint
     , irc-client
+    , mueval
     , lens
     , optparse-simple
+    , process
     , text
     , yaml
   exposed-modules:
