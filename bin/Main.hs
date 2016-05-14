@@ -5,8 +5,6 @@ module Main where
 
 import Desbot
 
-import           Control.Concurrent
-import           Control.Monad (forM_)
 import           Control.Lens
 import qualified Data.ByteString as B
 import           Data.FileEmbed
