@@ -2,7 +2,6 @@ module Desbot where
 
 import           Control.Lens
 import           Data.Aeson
-import           Data.List (intercalate)
 import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
@@ -20,7 +19,7 @@ data PrivateConf = PrivateConf { pcHost :: Text
                                , pcLogFile :: Maybe FilePath
                                , pcAutojoin :: [Text]
                                , pcNick :: Text
-                               , pcPass :: Text
+                               , pcPass :: Maybe Text
                                }
   deriving (Eq, Show, Generic)
 
@@ -45,7 +44,9 @@ connect'' cfg =
                        , _ctcpVer = mappend "desbot <https://github.com/pharpend/desbot>, "
                                             versionText
                        , _eventHandlers = mappend (_eventHandlers instanceCfg)
-                                                  [evalHandler cfg]
+                                                  [ evalHandler cfg
+                                                  , authHandler cfg
+                                                  ]
                        }
      start c instanceCfg'
   where
@@ -59,6 +60,28 @@ connect'' cfg =
                       (T.encodeUtf8 (cfg ^. host))
                       (cfg ^. port)
                       1
+
+-- |Authorize if requested
+authHandler :: PrivateConf -> EventHandler ()
+authHandler cfg =
+  EventHandler "Haskell evaluation in a private message"
+               ENotice
+               ef
+  where
+    ef e =
+      case _message e of
+        Notice tgt (Right msg)
+          | (tgt == (cfg ^. nick)) && (msg `startsWith` "This nickname is registered.") ->
+              case _source e of
+                User "NickServ" ->
+                  send (Privmsg "NickServ"
+                                (Right (mappend "identify "
+                                                (maybe mempty id (cfg ^. pass)))))
+                _ -> return ()
+          | otherwise -> return ()
+        _ -> return ()
+            
+
 
 -- |Evaluate private messages sent directly to the bot
 evalHandler :: PrivateConf -> EventHandler ()
@@ -79,7 +102,7 @@ evalHandler cfg =
             _ -> return ()
         Channel s nck ->
           case _message e of
-            Privmsg tgt (Right msg)
+            Privmsg _ (Right msg)
               -- Message to a channel targeting the bot
               | or $ map (startsWith msg . mappend (cfg ^. nick)) [": ", ", "] ->
                   -- the nick plus ", " or ": "
@@ -88,7 +111,6 @@ evalHandler cfg =
               | otherwise -> return ()
             _ -> return ()
         _ -> return ()
-    x `startsWith` y = T.take (T.length y) x == y
 
 -- |Thing that evaluates
 --
@@ -108,19 +130,21 @@ evald src tgt x =
            -- Ellipsize if there are more than 3 lines
            res' | 3 < length res = mappend res ["..."]
                 | otherwise = res
-       return $ map (Privmsg src . Right . applyTarget tgt) res'
+       return $ map (Privmsg src . Right . applyTarget) res'
   where
     -- Ellipsize if it's more than 64 characters
     lineup line | 64 > T.length line = line
                 | otherwise = mappend (T.take 64 line) "..."
     unpacked = T.unpack x
-    pmtr = Privmsg src . Right . applyTarget tgt . T.pack
-    applyTarget tgt msg = case tgt of
-                            Nothing -> msg
-                            Just x -> mconcat [x, ": ", msg]
+    applyTarget msg = case tgt of
+                        Nothing -> msg
+                        Just y -> mconcat [y, ": ", msg]
     lp = T.lines . T.pack
 
 
 -- |The version of desbot
 versionText :: Text
 versionText = T.pack $(simpleVersion P.version)
+
+startsWith :: Text -> Text -> Bool
+x `startsWith` y = T.take (T.length y) x == y
