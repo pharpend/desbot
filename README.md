@@ -52,6 +52,23 @@ or send it a private message.
         <nick> 1 + 1
         <desbot> 2
 
+### Running on a server
+
+I copied the [keter upstart script][ketup], and modified it to work with
+desbot. The script can be found in
+[`config/desbot.conf`](config/desbot.conf).
+
+    $ sudo cp config/desbot.conf /etc/init
+
+**IMPORTANT**: edit the init script and set the user to whoever you
+are.
+
+    $ sudo -e /etc/init/desbot.conf
+
+You can find out which user you are by running
+
+    $ whoami
+
 ## Contact
 
 * Bugs and/or questions should be reported in the
@@ -60,4 +77,5 @@ or send it a private message.
   FreeNode.net.
 
 [lb]: https://github.com/lambdabot/lambdabot
+[ketup]: https://github.com/snoyberg/keter/blob/master/setup-keter.sh#L50
 [stack]: http://docs.haskellstack.org/en/stable/README/
