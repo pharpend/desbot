@@ -101,9 +101,10 @@ evald :: Text           -- ^Source
                         -- separate messages.
 evald src tgt x =
   unsafePerformIO $
-    do result <- readProcess "mueval" ["-e", unpacked] mempty
+    do (_, errs, result) <- readProcessWithExitCode "mueval" ["-e", unpacked] mempty
        let -- Split into lines, ellipsize each line
-           res = map (lineup . T.strip) $ T.lines $ T.pack result
+           res = map (lineup . T.strip)
+                     (mappend (lp result) (lp errs))
            -- Ellipsize if there are more than 3 lines
            res' | 3 < length res = mappend res ["..."]
                 | otherwise = res
@@ -117,6 +118,7 @@ evald src tgt x =
     applyTarget tgt msg = case tgt of
                             Nothing -> msg
                             Just x -> mconcat [x, ": ", msg]
+    lp = T.lines . T.pack
 
 
 -- |The version of desbot
