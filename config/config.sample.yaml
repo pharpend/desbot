@@ -11,3 +11,10 @@ pcAutojoin:
   - "#haskell-botspam"
 pcNick: desbot-example
 pcPass: desbot-example
+
+# You can optionally specify a log file with
+# 
+# pcLogFile: /path/to/log/file
+# 
+# By default, desbot puts logs in ~/.local/share/desbot, and organizes them so
+# they won't collide.

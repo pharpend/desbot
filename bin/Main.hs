@@ -35,7 +35,7 @@ main =
             mkdir_p d
             cfp <- confFilePath
             scfp <- sampleConfFilePath
-            B.writeFile cfp sampleConfigText
+            B.writeFile scfp sampleConfigText
             putStrLn (mconcat [ "You chould edit "
                               , scfp
                               , " now, and move it to "
@@ -60,7 +60,7 @@ main =
         subconcat = altConcat . fmap subparser
         x </> y = mconcat [x, "/", y]
         mkdir_p = createDirectoryIfMissing True
-        sampleConfigText = $(embedFile "config/desbot.yaml.sample")
+        sampleConfigText = $(embedFile "config/config.sample.yaml")
         confDir = getXdgDirectory XdgConfig "desbot"
         dataDir = getXdgDirectory XdgData "desbot"
         confFilePath = fmap (</> "config.yaml") confDir
