@@ -1,0 +1,13 @@
+# The attribute names in this file are weird because the author of the program
+# is lazy and has the program automatically generate the names instead of
+# writing them by hand.
+
+pcHost: irc.freenode.net
+pcPort: 6697
+pcTls: true
+pcAutojoin:
+  - "#learnprogramming"
+  - "#lpmc"
+  - "#haskell-botspam"
+pcNick: desbot-example
+pcPass: desbot-example
