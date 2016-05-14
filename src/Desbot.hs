@@ -29,13 +29,11 @@ instance FromJSON PrivateConf
 
 makeLensesWith abbreviatedFields ''PrivateConf
 
--- |Read @config/desbot.yaml@, parse it into a 'Conf'
-readPrivateConf :: IO PrivateConf
-readPrivateConf =
-  do res <- decodeFileEither "config/desbot.yaml"
+-- |Read a file, parse it into a 'PrivateConf'
+readPrivateConf :: FilePath -> IO PrivateConf
+readPrivateConf fp =
+  do res <- decodeFileEither fp
      either (fail . show) return res
-
-
 
 -- |Connect to the configuration
 connect'' :: PrivateConf -> IO ()
@@ -45,13 +43,12 @@ connect'' cfg =
          instanceCfg' =
            instanceCfg { _channels = cfg ^. autojoin
                        , _ctcpVer = mappend "desbot <https://github.com/pharpend/desbot>, "
-                                            versionTxt
+                                            versionText
                        , _eventHandlers = mappend (_eventHandlers instanceCfg)
                                                   [evalHandler cfg]
                        }
      start c instanceCfg'
   where
-    versionTxt = T.pack $(simpleVersion P.version)
     connCmd | cfg ^. tls = connectWithTLS'
             | otherwise = connect'
     logger =
@@ -94,7 +91,7 @@ evalHandler cfg =
     x `startsWith` y = T.take (T.length y) x == y
 
 -- |Thing that evaluates
--- 
+--
 -- Uses 'unsafePerformIO'
 evald :: Text           -- ^Source
       -> Maybe Text     -- ^Person to target
@@ -120,3 +117,8 @@ evald src tgt x =
     applyTarget tgt msg = case tgt of
                             Nothing -> msg
                             Just x -> mconcat [x, ": ", msg]
+
+
+-- |The version of desbot
+versionText :: Text
+versionText = T.pack $(simpleVersion P.version)

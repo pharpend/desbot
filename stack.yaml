@@ -1,9 +1,8 @@
 resolver: lts-5.16
-
 packages:
   - '.'
-
 extra-deps:
   - aeson-0.11.2.0
+  - directory-1.2.6.3
   - mueval-0.9.1.1.2
   - show-0.6

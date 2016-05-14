@@ -14,6 +14,7 @@ category:            Network
 build-type:          Simple
 cabal-version:       >=1.10
 extra-source-files:
+  config/desbot.yaml.sample
   LICENSE
   README.md
 
@@ -24,6 +25,7 @@ source-repository head
 library
   hs-source-dirs:      src
   default-language:    Haskell2010
+  ghc-options:         -Wall
   default-extensions:
     DeriveGeneric
     FlexibleContexts
@@ -36,8 +38,8 @@ library
   other-modules:
     Paths_desbot
   build-depends:
-      base ==4.8.*
-    , aeson >=0.10.0.0
+      aeson >=0.10.0.0
+    , base ==4.8.*
     , hint
     , irc-client
     , mueval
@@ -53,9 +55,19 @@ executable desbot
   hs-source-dirs:      bin
   default-language:    Haskell2010
   main-is:             Main.hs
+  ghc-options:         -Wall -threaded
+  default-extensions:
+    TemplateHaskell
   build-depends:
       base ==4.8.*
+    , bytestring
     , desbot
+    , directory >=1.2.3.0
+    , file-embed
+    , lens
+    , optparse-applicative
+    , text
+    , time
 
 test-suite spec
   hs-source-dirs:      spec
