@@ -123,7 +123,14 @@ evald :: Text           -- ^Source
                         -- separate messages.
 evald src tgt x =
   unsafePerformIO $
-    do (_, errs, result) <- readProcessWithExitCode "mueval" ["-e", unpacked] mempty
+    do (_, errs, result) <-
+         readProcessWithExitCode "mueval"
+                                 [ "-l"
+                                 , "res/DesbotFuns.hs"
+                                 , "-e"
+                                 , unpacked
+                                 ]
+                                 mempty
        let -- Split into lines, ellipsize each line
            res = map (lineup . T.strip)
                      (mappend (lp result) (lp errs))
