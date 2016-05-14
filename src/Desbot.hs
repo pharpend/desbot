@@ -128,7 +128,7 @@ evald src tgt x =
            res = map (lineup . T.strip)
                      (mappend (lp result) (lp errs))
            -- Ellipsize if there are more than 3 lines
-           res' | 3 < length res = mappend res ["..."]
+           res' | 3 < length res = mappend (take 3 res) ["..."]
                 | otherwise = res
        return $ map (Privmsg src . Right . applyTarget) res'
   where
