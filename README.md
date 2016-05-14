@@ -56,12 +56,14 @@ or send it a private message.
 
 I'm too lazy to open a new GitHub issue for each of these.
 
-* Desbot needs to display type information when queried with `:t` or `:type`
-* Desbot needs to display kind information when queried with `:k` or `:kind`
-* Desbot needs to link to its source code when given `:src` or `:source`.
+* Desbot needs to display type information when queried with `:t` or
+  `:type`
+* Desbot needs to display kind information when queried with `:k` or
+  `:kind`
+* Desbot needs to link to its source code when given `:src` or
+  `:source`.
 * Desbot needs to respond to `CTCP SOURCE`.
-* Desbot needs to display its version when given `:version` or
-  `:version`
+* Desbot needs to display its version when given `:version`.
 * I need to clean up the mueval code so that it can be used as a proper
   library, rather than just running `spawnCommand`. I have a fork called
   "nueval", which can be found here:
