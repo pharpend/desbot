@@ -54,7 +54,7 @@ or send it a private message.
 
 ## Things to do
 
-I'm too lazy to open a new GitHub
+I'm too lazy to open a new GitHub issue for each of these.
 
 * Desbot needs to display type information when queried with `:t` or `:type`
 * Desbot needs to display kind information when queried with `:k` or `:kind`
