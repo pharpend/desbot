@@ -36,6 +36,22 @@ Follow the instructions given. You should then be ready to go!
 
     $ desbot run
 
+## Usage
+
+To use `desbot` on the network, you can either target it in a channel,
+or send it a private message.
+
+*   In a channel, you need to prefix your command with `desbot: ` or
+    `desbot, `:
+
+        <nick> desbot: 1 + 1
+        <desbot> nick: 2
+
+*   In a private message, don't do that
+
+        <nick> 1 + 1
+        <desbot> 2
+
 ## Contact
 
 * Bugs and/or questions should be reported in the
